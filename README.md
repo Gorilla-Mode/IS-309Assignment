@@ -9,7 +9,6 @@
 | Sivert Svanes Sæstad | sivertss@uia.no | sivert-svanes |
 | Marie Hesseberg | marielh@uia.no |  |
 
----
 
 ##  Installation / Setup
 
@@ -17,7 +16,7 @@
 > ### 0. Prerequisites
 > - Port `5432` is open
 
----
+
 
 > [!CAUTION]
 > ### 1. Dependencies
@@ -28,7 +27,6 @@
 git clone https://github.com/Gorilla-Mode/IS-309Assignment.git
 ```
 
----
 ## 3. Project Overview
 
 This project implements a relational database schema in PostgreSQL for a bicycle sharing system inspired by Bcycle.
@@ -37,7 +35,7 @@ The system supports programs operating in different cities, stations with dockin
 
 The database is designed according to the assignment requirements and enforces business rules using primary keys, foreign keys, unique constraints, and check constraints.
 
----
+
 
 ## 4. Database Structure
 
@@ -55,6 +53,6 @@ The schema consists of the following main entities:
 
 Status data is stored separately from core entities to preserve historical snapshots rather than overwriting live data.
 
----
+
 
 
