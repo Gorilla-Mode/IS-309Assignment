@@ -1,6 +1,35 @@
-# IS-309 Assignment 1 - Bike Sharing Database
+# IS-309 Assignment 1 - Bike Sharing DB
 
-## 1️. Project Overview
+##  Group 1
+
+| Candidate | E-mail | GitHub Username |
+|--|------------|----------|
+| Iver Kroken | iverk@uia.no | iverkroken |
+| Tobias Olsen Nodland | tobiason@uia.no | Gorilla-Mode |
+| Sivert Svanes Sæstad | sivertss@uia.no | sivert-svanes |
+| Marie Hesseberg | marielh@uia.no |  |
+
+---
+
+##  Installation / Setup
+
+> [!CAUTION]
+> ### 0. Prerequisites
+> - Port `5432` is open
+
+---
+
+> [!CAUTION]
+> ### 1. Dependencies
+> - Docker
+### 2. Clone repository
+
+```bash
+git clone https://github.com/Gorilla-Mode/IS-309Assignment.git
+```
+
+---
+## 3. Project Overview
 
 This project implements a relational database schema in PostgreSQL for a bicycle sharing system inspired by Bcycle.
 
@@ -10,7 +39,7 @@ The database is designed according to the assignment requirements and enforces b
 
 ---
 
-## 2️. Database Structure
+## 4. Database Structure
 
 The schema consists of the following main entities:
 
@@ -28,9 +57,4 @@ Status data is stored separately from core entities to preserve historical snaps
 
 ---
 
-## 3️. Setup
-### 1. Clone repository
-
-```bash
-git clone https://github.com/Gorilla-Mode/IS-309Assignment.git
 
