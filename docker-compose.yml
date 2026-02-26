@@ -2,10 +2,12 @@ services:
   db:
     image: postgres:16
     container_name: is309_db
+    env_file:
+      - .env
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: bcycle
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-bcycle}
     ports:
       - "5432:5432"
     volumes:
