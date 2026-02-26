@@ -21,11 +21,29 @@
 > [!CAUTION]
 > ### 1. Dependencies
 > - Docker
-### 2. Clone repository
+### 2. Setup
+
+#### 1: Clone the repository
 
 ```bash
 git clone https://github.com/Gorilla-Mode/IS-309Assignment.git
 ```
+
+#### 2: Start the database
+
+In root dir run: 
+
+```powershell
+.\setup.ps1 -d
+```
+*Use flag -h, for options*
+
+
+
+```powershell
+.\initdb.ps1 -rc -l
+```
+*Use flag -h, for options*
 
 ## 3. Project Overview
 
