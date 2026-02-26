@@ -39,7 +39,7 @@ if ($r)
 
 $scriptAbsolutePath = Split-Path -Parent $MyInvocation.MyCommand.Definition
 $sqlAbsolutePath = $scriptAbsolutePath+"/db.sql"
-$SqlUserPath = $scriptAbsolutePath+"/user.sql"
+$SqlDataAbsolutePath = $scriptAbsolutePath+"/seeddata.sql"
 $envAbsolutePath = $scriptAbsolutePath+"/.env"
 
 #tests
@@ -65,9 +65,11 @@ if(!$ni)
     try
     {
         #injects sql script to container
-        Write-Host "Injecting sql from @ $sqlAbsolutePath to container..."
-        # Use the container name from docker-compose (container_name: is309_db)
+        Write-Host "Injecting db.sql from @ $sqlAbsolutePath to container..."
         docker cp $sqlAbsolutePath is309_db:/db.sql
+
+        Write-Host "Injecting seeddata.sql from @ $SqlDataAbsolutePath to container..."
+        docker cp $SqlDataAbsolutePath is309_db:/seeddata.sql
     }
     catch
     {
@@ -126,9 +128,12 @@ if(!$ne)
     {
         #runs sql script on container
         Write-Host "Executing database sql script on $($envHash['POSTGRES_DB'])..."
-        # Run psql inside the Postgres container. Prefix with PGPASSWORD so psql can authenticate non-interactively.
         docker exec -i is309_db sh -c "PGPASSWORD='$($envHash['POSTGRES_PASSWORD'])' psql -U $($envHash['POSTGRES_USER']) -d $($envHash['POSTGRES_DB']) -f /db.sql"
         Write-Host "    Sql script executed, tables built"
+
+        Write-Host "Executing seeddata sql script on $($envHash['POSTGRES_DB'])..."
+        docker exec -i is309_db sh -c "PGPASSWORD='$($envHash['POSTGRES_PASSWORD'])' psql -U $($envHash['POSTGRES_USER']) -d $($envHash['POSTGRES_DB']) -f /seeddata.sql"
+        Write-Host "    Sql script executed, tables populated"
     }
     catch
     {
