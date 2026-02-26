@@ -63,30 +63,32 @@ if (!$r)
         }
     }
     
-    #Passowrd stored as secure string to hide input mostly
-    $secureDatabaseRootPwd = Read-Host "Create root password" -AsSecureString
+    #Passwords stored as secure strings to hide input
     $databaseName = Read-Host "Create database name"
-    $databaseUserName = Read-Host "Create user name"
-    $databaseUserPwd = Read-Host "Create user password" -AsSecureString
-    
-    #returns password to plain text
-    $DatabaseRootPwd = [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($secureDatabaseRootPwd))
-    $databaseUserPwd = [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($databaseUserPwd))
+    $secureRootPwd = Read-Host "Create root password" -AsSecureString
+    $appUserName = Read-Host "Create app username"
+    $secureAppPwd = Read-Host "Create app user password" -AsSecureString
+
+    #returns passwords to plain text
+    $rootPwd = [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($secureRootPwd))
+    $appPwd = [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($secureAppPwd))
 
     try
     {
         #populates env file
         Write-Host "    Populating .env @ $scriptDir"
 
-        Add-Content -Path ($scriptDir + "/.env") -Value ("MYSQL_ROOT_PASSWORD=$databaseRootPwd")
-        Write-Host "        - SQL root password inserted"
-        Add-Content -Path ($scriptDir +"/.env") -Value ("POSTGRES_DB=$databaseName")
-        Write-Host "        - SQL database name inserted"
-        Add-Content -Path ($scriptDir +"/.env") -Value ("POSTGRES_USER=$databaseUserName")
-        Write-Host "        - SQL username inserted"
-        Add-Content -Path ($scriptDir +"/.env") -Value ("POSTGRES_PASSWORD=$databaseUserPwd")
-        Write-Host "        - SQL user password inserted"
-        Add-Content -Path ($scriptDir +"/.env") -Value ("EXTERNALCONNECTION=postgresql://$($databaseUserName):$($databaseUserPwd)@localhost:5432/$databaseName")
+        Add-Content -Path ($scriptDir + "/.env") -Value ("POSTGRES_USER=postgres")
+        Write-Host "        - Postgres root username inserted"
+        Add-Content -Path ($scriptDir + "/.env") -Value ("POSTGRES_PASSWORD=$rootPwd")
+        Write-Host "        - Postgres root password inserted"
+        Add-Content -Path ($scriptDir + "/.env") -Value ("POSTGRES_DB=$databaseName")
+        Write-Host "        - Postgres database name inserted"
+        Add-Content -Path ($scriptDir + "/.env") -Value ("APP_USER=$appUserName")
+        Write-Host "        - App username inserted"
+        Add-Content -Path ($scriptDir + "/.env") -Value ("APP_PASSWORD=$appPwd")
+        Write-Host "        - App user password inserted"
+        Add-Content -Path ($scriptDir + "/.env") -Value ("EXTERNALCONNECTION=postgresql://$($appUserName):$($appPwd)@localhost:5432/$databaseName")
         Write-Host "        - External connection string inserted"
 
         Write-Host "    .env populated successfully"

@@ -66,7 +66,8 @@ if(!$ni)
     {
         #injects sql script to container
         Write-Host "Injecting sql from @ $sqlAbsolutePath to container..."
-        docker cp $sqlAbsolutePath db:/
+        # Use the container name from docker-compose (container_name: is309_db)
+        docker cp $sqlAbsolutePath is309_db:/db.sql
     }
     catch
     {
@@ -116,9 +117,13 @@ if(!$ne)
     try
     {
         #runs sql script on container
-        Write-Host "Executing database sql script on $($envHash['MYSQL_DATABASE'])..."
-        docker exec db sh -c "mariadb $($envHash['MYSQL_DATABASE']) -u root -p$($envHash['MYSQL_ROOT_PASSWORD']) <db.sql"
+        Write-Host "Executing database sql script on $($envHash['POSTGRES_DB'])..."
+        # Run psql inside the Postgres container. Prefix with PGPASSWORD so psql can authenticate non-interactively.
+        docker exec -i is309_db sh -c "PGPASSWORD='$($envHash['POSTGRES_PASSWORD'])' psql -U $($envHash['POSTGRES_USER']) -d $($envHash['POSTGRES_DB']) -f /db.sql"
         Write-Host "    Sql script executed, tables built"
+
+        # For now we stop after running db.sql to avoid running MySQL/MariaDB specific user SQL steps below.
+        return
 
         Write-Host "    Generating sql user script..."
         $null = New-Item -Path $scriptAbsolutePath -Name "user.sql" -Force
