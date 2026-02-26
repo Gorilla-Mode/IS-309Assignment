@@ -27,7 +27,7 @@ if($l -and !$rc)
 
 if ($r)
 {
-    Write-Host "WARNING: Selected flag will drop database!"
+    Write-Host "WARNING: Selected flag will terminate connections and drop database!"
     $conf = Read-Host "     Confirm [Y]"
 
     if ($conf -notlike "Y")
@@ -93,18 +93,26 @@ if($r) #goofy script maybe redo
     {
         Write-Host "Rebuilding Database"
         Write-Host "    Generating drop database sql script..."
-        $null = New-Item -Path $scriptAbsolutePath -Name "dropdb.sql" -Value "DROP DATABASE $($envHash['MYSQL_DATABASE']); CREATE DATABASE $($envHash['MYSQL_DATABASE']);" -Force
-        $dropsqlAbsolutePath = $scriptAbsolutePath+"/dropdb.sql"
+        $dropsqlAbsolutePath = $scriptAbsolutePath + "/dropdb.sql"
+        $dropSqlContent = @"
+REVOKE CONNECT ON DATABASE $($envHash['POSTGRES_DB']) FROM public;
+SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '$($envHash['POSTGRES_DB'])' AND pid <> pg_backend_pid();
+DROP DATABASE IF EXISTS $($envHash['POSTGRES_DB']);
+CREATE DATABASE $($envHash['POSTGRES_DB']);
+"@
+        $dropSqlContent | Out-File -FilePath $dropsqlAbsolutePath -Encoding UTF8 -Force
 
         Write-Host "    Injecting sql from @ $dropsqlAbsolutePath to container..."
-        docker cp -q $dropsqlAbsolutePath db:/
-        Write-Host "    Removing used script from @ $dropsqlAbsolutePath..."
-        Remove-Item -Path $dropsqlAbsolutePath
-        Write-Host "    Used script removed"
+        docker cp -q $dropsqlAbsolutePath is309_db:/
 
-        Write-Host "    Executing database sql script on $($envHash['MYSQL_DATABASE'])..."
-        docker exec db sh -c "mariadb $($envHash['MYSQL_DATABASE']) -u root -p$($envHash['MYSQL_ROOT_PASSWORD']) <dropdb.sql"
-        Write-Host "    Database dropped!"
+        Write-Host "    Executing database sql script on $($envHash['POSTGRES_DB'])..."
+        docker exec -i is309_db env PGPASSWORD=$($envHash['POSTGRES_PASSWORD']) psql -U $($envHash['POSTGRES_USER']) -d postgres -f /dropdb.sql
+
+        Write-Host "    Removing used script from @ $dropsqlAbsolutePath..."
+        Remove-Item -Path $dropsqlAbsolutePath -ErrorAction SilentlyContinue
+        docker exec -i is309_db rm -f /dropdb.sql
+        Write-Host "    Database dropped and recreated!"
+
     }
     catch
     {
@@ -121,28 +129,6 @@ if(!$ne)
         # Run psql inside the Postgres container. Prefix with PGPASSWORD so psql can authenticate non-interactively.
         docker exec -i is309_db sh -c "PGPASSWORD='$($envHash['POSTGRES_PASSWORD'])' psql -U $($envHash['POSTGRES_USER']) -d $($envHash['POSTGRES_DB']) -f /db.sql"
         Write-Host "    Sql script executed, tables built"
-
-        # For now we stop after running db.sql to avoid running MySQL/MariaDB specific user SQL steps below.
-        return
-
-        Write-Host "    Generating sql user script..."
-        $null = New-Item -Path $scriptAbsolutePath -Name "user.sql" -Force
-
-        Add-Content -Path $SqlUserPath -Value "START TRANSACTION;"
-        Add-Content -Path $SqlUserPath -Value "REVOKE ALL PRIVILEGES ON * FROM '$($envHash['MYSQL_USER'])'@'%';"
-        Add-Content -Path $SqlUserPath -Value "GRANT SELECT, INSERT, UPDATE ON * TO '$($envHash['MYSQL_USER'])'@'%';"
-        Add-Content -Path $SqlUserPath -Value "REVOKE GRANT OPTION ON * FROM '$($envHash['MYSQL_USER'])'@'%';"
-        Add-Content -Path $SqlUserPath -Value "FLUSH PRIVILEGES;"
-        Add-Content -Path $SqlUserPath -Value "COMMIT;"
-
-        Write-Host "Injecting user sql from @ $SqlUserPath to container..."
-        docker cp $SqlUserPath db:/
-
-        Write-Host "    Executing sql user script on $($envHash['MYSQL_DATABASE'])..."
-        docker exec db sh -c "mariadb $($envHash['MYSQL_DATABASE']) -u root -p$($envHash['MYSQL_ROOT_PASSWORD']) <user.sql"
-
-        Remove-Item -Path $SqlUserPath
-        Write-Host "    Used script removed"
     }
     catch
     {
