@@ -7,7 +7,7 @@
 | Iver Kroken | iverk@uia.no | iverkroken |
 | Tobias Olsen Nodland | tobiason@uia.no | Gorilla-Mode |
 | Sivert Svanes Sæstad | sivertss@uia.no | sivert-svanes |
-| Marie Hesseberg | marielh@uia.no |  |
+| Marie Hesseberg | marielh@uia.no | MarieHesseberg |
 
 
 ##  Installation / Setup
