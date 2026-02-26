@@ -1,14 +1,4 @@
-DROP TABLE IF EXISTS BicycleStatus;
-DROP TABLE IF EXISTS StationStatus;
-DROP TABLE IF EXISTS Trip;
-DROP TABLE IF EXISTS Membership;
-DROP TABLE IF EXISTS Dock;
-DROP TABLE IF EXISTS Bicycle;
-DROP TABLE IF EXISTS Rider;
-DROP TABLE IF EXISTS Station;
-DROP TABLE IF EXISTS Program;
-
-CREATE TABLE Program (
+CREATE TABLE IF NOT EXISTS Program (
                          ProgramID   INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
                          ProgramCode VARCHAR(50) NOT NULL UNIQUE,
                          CountryCode CHAR(2) NOT NULL,
@@ -21,7 +11,7 @@ CREATE TABLE Program (
                          ShortName   VARCHAR(50)
 );
 
-CREATE TABLE Station (
+CREATE TABLE IF NOT EXISTS Station (
                          StationID     INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
                          StationCode   VARCHAR(80) NOT NULL UNIQUE,
                          ProgramID     INT NOT NULL REFERENCES Program(ProgramID),
@@ -35,7 +25,7 @@ CREATE TABLE Station (
                          ShortName     VARCHAR(50)
 );
 
-CREATE TABLE Dock (
+CREATE TABLE IF NOT EXISTS Dock (
                       DockID        INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
                       StationID     INT NOT NULL REFERENCES Station(StationID) ON DELETE CASCADE,
                       DockNumber    INT NOT NULL CHECK (DockNumber >= 1),
@@ -43,7 +33,7 @@ CREATE TABLE Dock (
                       UNIQUE (StationID, DockNumber)
 );
 
-CREATE TABLE Rider (
+CREATE TABLE IF NOT EXISTS Rider (
                        RiderID    INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
                        FirstName  VARCHAR(50) NOT NULL,
                        LastName   VARCHAR(50) NOT NULL,
@@ -56,7 +46,7 @@ CREATE TABLE Rider (
                        Zip        VARCHAR(20)
 );
 
-CREATE TABLE Membership (
+CREATE TABLE IF NOT EXISTS Membership (
                             MembershipID   INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
                             RiderID        INT NOT NULL REFERENCES Rider(RiderID) ON DELETE CASCADE,
                             MembershipType VARCHAR(10) NOT NULL CHECK (MembershipType IN ('DAY','MONTH','ANNUAL')),
@@ -65,7 +55,7 @@ CREATE TABLE Membership (
                             CHECK (ExpiresAt > PurchasedAt)
 );
 
-CREATE TABLE Bicycle (
+CREATE TABLE IF NOT EXISTS Bicycle (
                          BicycleID    INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
                          BicycleType  VARCHAR(10) NOT NULL CHECK (BicycleType IN ('ELECTRIC','SMART','CLASSIC','CARGO')),
                          Make         VARCHAR(50),
@@ -74,7 +64,7 @@ CREATE TABLE Bicycle (
                          YearAcquired INT CHECK (YearAcquired IS NULL OR (YearAcquired >= 1900 AND YearAcquired <= 2100))
 );
 
-CREATE TABLE Trip (
+CREATE TABLE IF NOT EXISTS Trip (
                       TripID              INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
                       RiderID             INT NOT NULL REFERENCES Rider(RiderID),
                       BicycleID           INT NOT NULL REFERENCES Bicycle(BicycleID),
@@ -87,7 +77,7 @@ CREATE TABLE Trip (
                       TotalCost           NUMERIC(10,2) CHECK (TotalCost IS NULL OR TotalCost >= 0)
 );
 
-CREATE TABLE StationStatus (
+CREATE TABLE IF NOT EXISTS StationStatus (
                                StationStatusID     INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
                                StationID           INT NOT NULL REFERENCES Station(StationID) ON DELETE CASCADE,
                                ReportedAt          TIMESTAMP NOT NULL,
@@ -101,7 +91,7 @@ CREATE TABLE StationStatus (
                                IsRenting           BOOLEAN NOT NULL DEFAULT TRUE
 );
 
-CREATE TABLE BicycleStatus (
+CREATE TABLE IF NOT EXISTS BicycleStatus (
                                BicycleStatusID  INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
                                BicycleID        INT NOT NULL REFERENCES Bicycle(BicycleID) ON DELETE CASCADE,
                                RecordedAt       TIMESTAMP NOT NULL,
