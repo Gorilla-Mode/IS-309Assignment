@@ -1,0 +1,122 @@
+[
+  {
+    "riderid": 1,
+    "firstname": "Alice",
+    "lastname": "Johnson",
+    "email": "alice.johnson@example.com",
+    "phone": "+1-212-555-0101",
+    "street": "123 Main St",
+    "apt": "4A",
+    "city": "New York",
+    "state": "NY",
+    "zip": "10001"
+  },
+  {
+    "riderid": 2,
+    "firstname": "Bob",
+    "lastname": "Smith",
+    "email": "bob.smith@example.com",
+    "phone": "+1-312-555-0202",
+    "street": "456 Oak Ave",
+    "apt": null,
+    "city": "Chicago",
+    "state": "IL",
+    "zip": "60614"
+  },
+  {
+    "riderid": 3,
+    "firstname": "Clara",
+    "lastname": "Dubois",
+    "email": "clara.dubois@example.com",
+    "phone": "+1-514-555-0303",
+    "street": "789 Rue Sherbrooke",
+    "apt": "12",
+    "city": "Montréal",
+    "state": "QC",
+    "zip": "H3A 1G1"
+  },
+  {
+    "riderid": 4,
+    "firstname": "David",
+    "lastname": "Lee",
+    "email": "david.lee@example.com",
+    "phone": "+1-212-555-0404",
+    "street": "321 Park Ave",
+    "apt": "7B",
+    "city": "New York",
+    "state": "NY",
+    "zip": "10022"
+  },
+  {
+    "riderid": 5,
+    "firstname": "Emma",
+    "lastname": "Larsen",
+    "email": "emma.larsen@example.com",
+    "phone": "+47-912-34-567",
+    "street": "Bygdøy allé 10",
+    "apt": null,
+    "city": "Oslo",
+    "state": null,
+    "zip": "0262"
+  },
+  {
+    "riderid": 6,
+    "firstname": "Frank",
+    "lastname": "Garcia",
+    "email": "frank.garcia@example.com",
+    "phone": "+1-312-555-0606",
+    "street": "100 State St",
+    "apt": null,
+    "city": "Chicago",
+    "state": "IL",
+    "zip": "60601"
+  },
+  {
+    "riderid": 7,
+    "firstname": "Grace",
+    "lastname": "Wang",
+    "email": "grace.wang@example.com",
+    "phone": "+1-212-555-0707",
+    "street": "55 W 46th St",
+    "apt": "3C",
+    "city": "New York",
+    "state": "NY",
+    "zip": "10036"
+  },
+  {
+    "riderid": 8,
+    "firstname": "Henrik",
+    "lastname": "Olsen",
+    "email": "henrik.olsen@example.com",
+    "phone": "+47-987-65-432",
+    "street": "Grünerløkka 5",
+    "apt": null,
+    "city": "Oslo",
+    "state": null,
+    "zip": "0555"
+  },
+  {
+    "riderid": 9,
+    "firstname": "Isabelle",
+    "lastname": "Tremblay",
+    "email": "isabelle.tremblay@example.com",
+    "phone": "+1-514-555-0909",
+    "street": "220 Av du Parc",
+    "apt": null,
+    "city": "Montréal",
+    "state": "QC",
+    "zip": "H2W 1R4"
+  },
+  {
+    "riderid": 10,
+    "firstname": "James",
+    "lastname": "Brown",
+    "email": "james.brown@example.com",
+    "phone": "+1-212-555-1010",
+    "street": "88 Greenwich St",
+    "apt": null,
+    "city": "New York",
+    "state": "NY",
+    "zip": "10006"
+  }
+]

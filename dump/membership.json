@@ -1,0 +1,72 @@
+[
+  {
+    "membershipid": 1,
+    "riderid": 1,
+    "membershiptype": "ANNUAL",
+    "purchasedat": "2025-03-01 09:00:00.000000",
+    "expiresat": "2026-03-01 09:00:00.000000"
+  },
+  {
+    "membershipid": 2,
+    "riderid": 2,
+    "membershiptype": "MONTH",
+    "purchasedat": "2025-12-15 14:30:00.000000",
+    "expiresat": "2026-01-15 14:30:00.000000"
+  },
+  {
+    "membershipid": 3,
+    "riderid": 3,
+    "membershiptype": "ANNUAL",
+    "purchasedat": "2025-06-01 08:00:00.000000",
+    "expiresat": "2026-06-01 08:00:00.000000"
+  },
+  {
+    "membershipid": 4,
+    "riderid": 4,
+    "membershiptype": "DAY",
+    "purchasedat": "2026-02-20 07:00:00.000000",
+    "expiresat": "2026-02-21 07:00:00.000000"
+  },
+  {
+    "membershipid": 5,
+    "riderid": 5,
+    "membershiptype": "ANNUAL",
+    "purchasedat": "2025-09-01 10:00:00.000000",
+    "expiresat": "2026-09-01 10:00:00.000000"
+  },
+  {
+    "membershipid": 6,
+    "riderid": 6,
+    "membershiptype": "MONTH",
+    "purchasedat": "2026-02-01 12:00:00.000000",
+    "expiresat": "2026-03-01 12:00:00.000000"
+  },
+  {
+    "membershipid": 7,
+    "riderid": 7,
+    "membershiptype": "DAY",
+    "purchasedat": "2026-02-25 06:00:00.000000",
+    "expiresat": "2026-02-26 06:00:00.000000"
+  },
+  {
+    "membershipid": 8,
+    "riderid": 8,
+    "membershiptype": "ANNUAL",
+    "purchasedat": "2025-05-15 11:00:00.000000",
+    "expiresat": "2026-05-15 11:00:00.000000"
+  },
+  {
+    "membershipid": 9,
+    "riderid": 9,
+    "membershiptype": "MONTH",
+    "purchasedat": "2026-01-20 09:30:00.000000",
+    "expiresat": "2026-02-20 09:30:00.000000"
+  },
+  {
+    "membershipid": 10,
+    "riderid": 10,
+    "membershiptype": "ANNUAL",
+    "purchasedat": "2025-07-01 08:00:00.000000",
+    "expiresat": "2026-07-01 08:00:00.000000"
+  }
+]

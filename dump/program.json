@@ -1,0 +1,50 @@
+[
+  {
+    "programid": 1,
+    "programcode": "CITIBIKE_NYC",
+    "countrycode": "US",
+    "name": "Citi Bike",
+    "location": "New York, NY",
+    "phone": "+1-855-245-3311",
+    "email": "support@citibikenyc.com",
+    "timezone": "America/New_York",
+    "url": "https://citibikenyc.com",
+    "shortname": "CitiBike"
+  },
+  {
+    "programid": 2,
+    "programcode": "DIVVY_CHI",
+    "countrycode": "US",
+    "name": "Divvy",
+    "location": "Chicago, IL",
+    "phone": "+1-855-553-4889",
+    "email": "support@divvybikes.com",
+    "timezone": "America/Chicago",
+    "url": "https://divvybikes.com",
+    "shortname": "Divvy"
+  },
+  {
+    "programid": 3,
+    "programcode": "BIXI_MTL",
+    "countrycode": "CA",
+    "name": "BIXI Montréal",
+    "location": "Montréal, QC",
+    "phone": "+1-514-789-2494",
+    "email": "info@bixi.com",
+    "timezone": "America/Montreal",
+    "url": "https://bixi.com",
+    "shortname": "BIXI"
+  },
+  {
+    "programid": 4,
+    "programcode": "BYSYKKEL_OSL",
+    "countrycode": "NO",
+    "name": "Oslo Bysykkel",
+    "location": "Oslo",
+    "phone": "+47-915-89-700",
+    "email": "post@oslobysykkel.no",
+    "timezone": "Europe/Oslo",
+    "url": "https://oslobysykkel.no",
+    "shortname": "Bysykkel"
+  }
+]
