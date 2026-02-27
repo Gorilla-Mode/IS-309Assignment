@@ -1,0 +1,98 @@
+[
+  {
+    "bicycleid": 1,
+    "bicycletype": "ELECTRIC",
+    "make": "Lyft",
+    "model": "Gen 4E",
+    "color": "Gray",
+    "yearacquired": 2024
+  },
+  {
+    "bicycleid": 2,
+    "bicycletype": "CLASSIC",
+    "make": "Lyft",
+    "model": "Gen 4",
+    "color": "Blue",
+    "yearacquired": 2023
+  },
+  {
+    "bicycleid": 3,
+    "bicycletype": "SMART",
+    "make": "PBSC",
+    "model": "E-FIT 527",
+    "color": "Black",
+    "yearacquired": 2024
+  },
+  {
+    "bicycleid": 4,
+    "bicycletype": "CLASSIC",
+    "make": "PBSC",
+    "model": "FIT 527",
+    "color": "Green",
+    "yearacquired": 2022
+  },
+  {
+    "bicycleid": 5,
+    "bicycletype": "ELECTRIC",
+    "make": "PBSC",
+    "model": "E-FIT 527",
+    "color": "White",
+    "yearacquired": 2025
+  },
+  {
+    "bicycleid": 6,
+    "bicycletype": "CARGO",
+    "make": "Urban Arrow",
+    "model": "Family",
+    "color": "Black",
+    "yearacquired": 2024
+  },
+  {
+    "bicycleid": 7,
+    "bicycletype": "CLASSIC",
+    "make": "Lyft",
+    "model": "Gen 3",
+    "color": "Blue",
+    "yearacquired": 2021
+  },
+  {
+    "bicycleid": 8,
+    "bicycletype": "ELECTRIC",
+    "make": "VanMoof",
+    "model": "S5",
+    "color": "Silver",
+    "yearacquired": 2024
+  },
+  {
+    "bicycleid": 9,
+    "bicycletype": "SMART",
+    "make": "VanMoof",
+    "model": "A5",
+    "color": "Red",
+    "yearacquired": 2025
+  },
+  {
+    "bicycleid": 10,
+    "bicycletype": "CLASSIC",
+    "make": "PBSC",
+    "model": "FIT 527",
+    "color": "Green",
+    "yearacquired": 2023
+  },
+  {
+    "bicycleid": 11,
+    "bicycletype": "ELECTRIC",
+    "make": "Lyft",
+    "model": "Gen 4E",
+    "color": "Gray",
+    "yearacquired": 2025
+  },
+  {
+    "bicycleid": 12,
+    "bicycletype": "CARGO",
+    "make": "Tern",
+    "model": "GSD S10",
+    "color": "Blue",
+    "yearacquired": 2024
+  }
+]

@@ -1,0 +1,122 @@
+[
+  {
+    "bicyclestatusid": 1,
+    "bicycleid": 1,
+    "recordedat": "2026-02-25 08:00:00.000000",
+    "status": "AVAILABLE",
+    "latitude": 40.765909,
+    "longitude": -73.976342,
+    "batterypercent": 72,
+    "remainingrange": 28.50
+  },
+  {
+    "bicyclestatusid": 2,
+    "bicycleid": 2,
+    "recordedat": "2026-02-25 08:00:00.000000",
+    "status": "AVAILABLE",
+    "latitude": 40.717548,
+    "longitude": -74.005305,
+    "batterypercent": null,
+    "remainingrange": null
+  },
+  {
+    "bicyclestatusid": 3,
+    "bicycleid": 3,
+    "recordedat": "2026-02-25 08:00:00.000000",
+    "status": "AVAILABLE",
+    "latitude": 45.503204,
+    "longitude": -73.571640,
+    "batterypercent": 85,
+    "remainingrange": 35.00
+  },
+  {
+    "bicyclestatusid": 4,
+    "bicycleid": 4,
+    "recordedat": "2026-02-25 08:00:00.000000",
+    "status": "AVAILABLE",
+    "latitude": 41.886024,
+    "longitude": -87.624117,
+    "batterypercent": null,
+    "remainingrange": null
+  },
+  {
+    "bicyclestatusid": 5,
+    "bicycleid": 5,
+    "recordedat": "2026-02-25 08:00:00.000000",
+    "status": "AVAILABLE",
+    "latitude": 45.501689,
+    "longitude": -73.573022,
+    "batterypercent": 60,
+    "remainingrange": 24.00
+  },
+  {
+    "bicyclestatusid": 6,
+    "bicycleid": 6,
+    "recordedat": "2026-02-25 08:00:00.000000",
+    "status": "NOT_AVAILABLE",
+    "latitude": 41.881032,
+    "longitude": -87.624084,
+    "batterypercent": null,
+    "remainingrange": null
+  },
+  {
+    "bicyclestatusid": 7,
+    "bicycleid": 7,
+    "recordedat": "2026-02-25 08:00:00.000000",
+    "status": "AVAILABLE",
+    "latitude": 41.932733,
+    "longitude": -87.653818,
+    "batterypercent": null,
+    "remainingrange": null
+  },
+  {
+    "bicyclestatusid": 8,
+    "bicycleid": 8,
+    "recordedat": "2026-02-25 08:00:00.000000",
+    "status": "AVAILABLE",
+    "latitude": 59.910764,
+    "longitude": 10.727177,
+    "batterypercent": 90,
+    "remainingrange": 40.00
+  },
+  {
+    "bicyclestatusid": 9,
+    "bicycleid": 9,
+    "recordedat": "2026-02-25 08:00:00.000000",
+    "status": "AVAILABLE",
+    "latitude": 59.911096,
+    "longitude": 10.750923,
+    "batterypercent": 55,
+    "remainingrange": 22.00
+  },
+  {
+    "bicyclestatusid": 10,
+    "bicycleid": 10,
+    "recordedat": "2026-02-25 08:00:00.000000",
+    "status": "AVAILABLE",
+    "latitude": 45.503204,
+    "longitude": -73.571640,
+    "batterypercent": null,
+    "remainingrange": null
+  },
+  {
+    "bicyclestatusid": 11,
+    "bicycleid": 11,
+    "recordedat": "2026-02-25 08:00:00.000000",
+    "status": "IN_USE",
+    "latitude": 40.750000,
+    "longitude": -73.990000,
+    "batterypercent": 45,
+    "remainingrange": 18.00
+  },
+  {
+    "bicyclestatusid": 12,
+    "bicycleid": 12,
+    "recordedat": "2026-02-25 08:00:00.000000",
+    "status": "NOT_AVAILABLE",
+    "latitude": 41.886024,
+    "longitude": -87.624117,
+    "batterypercent": null,
+    "remainingrange": null
+  }
+]

@@ -1,0 +1,194 @@
+[
+  {
+    "dockid": 1,
+    "stationid": 1,
+    "docknumber": 1,
+    "isoperational": true
+  },
+  {
+    "dockid": 2,
+    "stationid": 1,
+    "docknumber": 2,
+    "isoperational": true
+  },
+  {
+    "dockid": 3,
+    "stationid": 1,
+    "docknumber": 3,
+    "isoperational": true
+  },
+  {
+    "dockid": 4,
+    "stationid": 1,
+    "docknumber": 4,
+    "isoperational": false
+  },
+  {
+    "dockid": 5,
+    "stationid": 1,
+    "docknumber": 5,
+    "isoperational": true
+  },
+  {
+    "dockid": 6,
+    "stationid": 2,
+    "docknumber": 1,
+    "isoperational": true
+  },
+  {
+    "dockid": 7,
+    "stationid": 2,
+    "docknumber": 2,
+    "isoperational": true
+  },
+  {
+    "dockid": 8,
+    "stationid": 2,
+    "docknumber": 3,
+    "isoperational": true
+  },
+  {
+    "dockid": 9,
+    "stationid": 2,
+    "docknumber": 4,
+    "isoperational": true
+  },
+  {
+    "dockid": 10,
+    "stationid": 2,
+    "docknumber": 5,
+    "isoperational": true
+  },
+  {
+    "dockid": 11,
+    "stationid": 3,
+    "docknumber": 1,
+    "isoperational": true
+  },
+  {
+    "dockid": 12,
+    "stationid": 3,
+    "docknumber": 2,
+    "isoperational": false
+  },
+  {
+    "dockid": 13,
+    "stationid": 3,
+    "docknumber": 3,
+    "isoperational": true
+  },
+  {
+    "dockid": 14,
+    "stationid": 3,
+    "docknumber": 4,
+    "isoperational": true
+  },
+  {
+    "dockid": 15,
+    "stationid": 5,
+    "docknumber": 1,
+    "isoperational": true
+  },
+  {
+    "dockid": 16,
+    "stationid": 5,
+    "docknumber": 2,
+    "isoperational": true
+  },
+  {
+    "dockid": 17,
+    "stationid": 5,
+    "docknumber": 3,
+    "isoperational": true
+  },
+  {
+    "dockid": 18,
+    "stationid": 5,
+    "docknumber": 4,
+    "isoperational": true
+  },
+  {
+    "dockid": 19,
+    "stationid": 7,
+    "docknumber": 1,
+    "isoperational": true
+  },
+  {
+    "dockid": 20,
+    "stationid": 7,
+    "docknumber": 2,
+    "isoperational": true
+  },
+  {
+    "dockid": 21,
+    "stationid": 7,
+    "docknumber": 3,
+    "isoperational": false
+  },
+  {
+    "dockid": 22,
+    "stationid": 7,
+    "docknumber": 4,
+    "isoperational": true
+  },
+  {
+    "dockid": 23,
+    "stationid": 7,
+    "docknumber": 5,
+    "isoperational": true
+  },
+  {
+    "dockid": 24,
+    "stationid": 8,
+    "docknumber": 1,
+    "isoperational": true
+  },
+  {
+    "dockid": 25,
+    "stationid": 8,
+    "docknumber": 2,
+    "isoperational": true
+  },
+  {
+    "dockid": 26,
+    "stationid": 8,
+    "docknumber": 3,
+    "isoperational": true
+  },
+  {
+    "dockid": 27,
+    "stationid": 10,
+    "docknumber": 1,
+    "isoperational": true
+  },
+  {
+    "dockid": 28,
+    "stationid": 10,
+    "docknumber": 2,
+    "isoperational": true
+  },
+  {
+    "dockid": 29,
+    "stationid": 10,
+    "docknumber": 3,
+    "isoperational": true
+  },
+  {
+    "dockid": 30,
+    "stationid": 11,
+    "docknumber": 1,
+    "isoperational": true
+  },
+  {
+    "dockid": 31,
+    "stationid": 11,
+    "docknumber": 2,
+    "isoperational": false
+  },
+  {
+    "dockid": 32,
+    "stationid": 11,
+    "docknumber": 3,
+    "isoperational": true
+  }
+]
