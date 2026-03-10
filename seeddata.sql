@@ -455,3 +455,39 @@ INSERT INTO bicyclestatus (bicycleid, recordedat, status, latitude, longitude, b
 VALUES (4, now() - INTERVAL '5 hours', 'NOT_AVAILABLE', 55.682222, 12.573611,
         NULL, NULL)
 ON CONFLICT (bicyclestatusid) DO NOTHING;
+
+
+
+start transaction;
+    INSERT INTO trip (riderid, bicycleid, startstationid, endstationid, starttime, endtime, totaldistance, totalelapsedseconds,
+                      totalcost)
+    VALUES (1, 1, 1, 2, now() - INTERVAL '2 hours', now() - INTERVAL '1 hour',
+            1500, 0, 1000)
+    ON CONFLICT (tripid) DO NOTHING;
+
+    INSERT INTO trip (riderid, bicycleid, startstationid, endstationid, starttime, endtime, totaldistance, totalelapsedseconds,
+                      totalcost)
+    VALUES (2, 2, 1, 3, now() - INTERVAL '3 hours', now() - INTERVAL '2.75 hours',
+            2500, 0, 1500)
+    ON CONFLICT (tripid) DO NOTHING;
+
+    INSERT INTO trip (riderid, bicycleid, startstationid, endstationid, starttime, endtime, totaldistance, totalelapsedseconds,
+                      totalcost)
+    VALUES (3, 3, 5, 7, now() - INTERVAL '4 hours', now() - INTERVAL '3.5 hours',
+            3000, 0, 1800)
+    ON CONFLICT (tripid) DO NOTHING;
+
+    INSERT INTO trip (riderid, bicycleid, startstationid, endstationid, starttime, endtime, totaldistance, totalelapsedseconds,
+                      totalcost)
+    VALUES (4, 1, 9, 11, now() - INTERVAL '5 hours', now() - INTERVAL '4.5 hours',
+            2200, 0, 1400)
+    ON CONFLICT (tripid) DO NOTHING;
+
+    INSERT INTO trip (riderid, bicycleid, startstationid, endstationid, starttime, endtime, totaldistance, totalelapsedseconds,
+                      totalcost)
+    VALUES (5, 4, 13, 15, now() - INTERVAL '6 hours', now() - INTERVAL '5.75 hours',
+            1800, 0, 1200)
+    ON CONFLICT (tripid) DO NOTHING;
+
+    UPDATE trip SET totalelapsedseconds = EXTRACT(EPOCH FROM (endtime - starttime)) where TRUE; --still DGAF do it on all rows
+commit;
