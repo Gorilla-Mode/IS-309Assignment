@@ -48,11 +48,7 @@ CREATE OR REPLACE PROCEDURE ADD_DOCK_SP(
     LANGUAGE plpgsql
 AS $$
 BEGIN
-    IF NOT EXISTS (
-        SELECT 1
-        FROM Station
-        WHERE StationID = p_station_id
-    ) THEN
+    IF NOT VALIDATE_RECORD_EXISTS_FN('station', 'stationid', p_station_id) THEN
         RAISE EXCEPTION 'Station with StationID % does not exist.', p_station_id;
     END IF;
 
@@ -77,11 +73,7 @@ DECLARE
     v_existing_membership_id INT;
     v_existing_expires_at TIMESTAMP;
 BEGIN
-    IF NOT EXISTS (
-        SELECT 1
-        FROM rider
-        WHERE riderid = p_rider_id
-    ) THEN
+    IF NOT VALIDATE_RECORD_EXISTS_FN('rider', 'riderid', p_rider_id) THEN
         RAISE EXCEPTION 'ERR: Rider with RiderID % does not exist', p_rider_id;
     END IF;
 
@@ -105,12 +97,13 @@ BEGIN
 
     IF v_existing_membership_id IS NOT NULL THEN
         UPDATE membership
-        SET expiresat = v_existing_expires_at + (v_expires_at - v_purchased_at)
+        SET expiresat = v_existing_expires_at + (v_expires_at - v_purchased_at),
+            membershiptype = p_membership_type
         WHERE membershipid = v_existing_membership_id
         RETURNING membershipid INTO p_membership_id;
 
-        RAISE NOTICE 'Membership extended for riderid: %. membershipid: %. New expiry: %', p_rider_id, p_membership_id,
-        v_existing_expires_at + (v_expires_at - v_purchased_at);
+        RAISE NOTICE 'Membership extended for riderid: %. membershipid: %. membershiptype: %.  New expiry: %', p_rider_id,
+            p_membership_id, p_membership_type ,v_existing_expires_at + (v_expires_at - v_purchased_at);
     ELSE
         INSERT INTO membership (riderid, membershiptype, purchasedat, expiresat)
         VALUES (p_rider_id, p_membership_type, v_purchased_at, v_expires_at)
@@ -139,11 +132,7 @@ AS $$
 DECLARE
     v_station_id INT;
 BEGIN
-    IF NOT EXISTS (
-        SELECT 1
-        FROM program
-        WHERE programid = p_program_id
-    ) THEN
+    IF NOT VALIDATE_RECORD_EXISTS_FN('program', 'programid', p_program_id) THEN
         RAISE EXCEPTION 'ERR: Program with ProgramID % does not exist', p_program_id;
     END IF;
 
@@ -239,7 +228,7 @@ EXECUTE FUNCTION log_dock_statement_fn();
 -- Docs
 
 COMMENT ON PROCEDURE PURCHASE_MEMBERSHIP_SP(INT, VARCHAR, INT) IS
-'Purchases or extends a membership for a rider.
+'Purchases or extends a membership for a rider, if the rider selects a new membership type it is updated.
 Params:
     p_rider_id: The ID of the rider to purchase membership for.
     p_membership_type: The type of membership to purchase. Must be DAY, MONTH, or ANNUAL.
