@@ -29,6 +29,65 @@ BEGIN
 END;
 $$;
 
+
+CREATE OR REPLACE PROCEDURE PURCHASE_MEMBERSHIP_SP(
+    IN p_rider_id INT,
+    IN p_membership_type VARCHAR(10),
+    OUT p_membership_id INT
+)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    v_purchased_at TIMESTAMP;
+    v_expires_at TIMESTAMP;
+    v_existing_membership_id INT;
+    v_existing_expires_at TIMESTAMP;
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM rider
+        WHERE riderid = p_rider_id
+    ) THEN
+        RAISE EXCEPTION 'ERR: Rider with RiderID % does not exist', p_rider_id;
+    END IF;
+
+    SELECT membershipid, expiresat
+    INTO v_existing_membership_id, v_existing_expires_at
+    FROM membership
+    WHERE riderid = p_rider_id
+      AND expiresat > CURRENT_TIMESTAMP
+    LIMIT 1;
+
+    IF p_membership_type NOT IN ('DAY', 'MONTH', 'ANNUAL') THEN
+        RAISE EXCEPTION 'ERR: Invalid membership type %. Must be DAY, MONTH, or ANNUAL.', p_membership_type;
+    END IF;
+
+    v_purchased_at := CURRENT_TIMESTAMP;
+    v_expires_at := CASE
+        WHEN p_membership_type = 'DAY' THEN v_purchased_at + INTERVAL '1 DAY'
+        WHEN p_membership_type = 'MONTH' THEN v_purchased_at + INTERVAL '1 MONTH'
+        WHEN p_membership_type = 'ANNUAL' THEN v_purchased_at + INTERVAL '1 YEAR'
+    END;
+
+    IF v_existing_membership_id IS NOT NULL THEN
+        UPDATE membership
+        SET expiresat = v_existing_expires_at + (v_expires_at - v_purchased_at)
+        WHERE membershipid = v_existing_membership_id
+        RETURNING membershipid INTO p_membership_id;
+
+        RAISE NOTICE 'Membership extended for riderid: %. membershipid: %. New expiry: %', p_rider_id, p_membership_id,
+        v_existing_expires_at + (v_expires_at - v_purchased_at);
+    ELSE
+        INSERT INTO membership (riderid, membershiptype, purchasedat, expiresat)
+        VALUES (p_rider_id, p_membership_type, v_purchased_at, v_expires_at)
+        RETURNING membershipid INTO p_membership_id;
+
+        RAISE NOTICE 'New membership for riderid: %. membershipid: %. expiry: %', p_rider_id, p_membership_id,
+        v_expires_at;
+    END IF;
+END;
+$$;
+
 /* =====================================================
    ROW-LEVEL TRIGGER FUNCTION
    check_dock_capacity_fn
