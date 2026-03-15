@@ -1,3 +1,38 @@
+CREATE OR REPLACE FUNCTION VALIDATE_RECORD_EXISTS_FN(
+    p_table_name TEXT,
+    p_column_name TEXT,
+    p_value INT
+)
+    RETURNS BOOLEAN
+    LANGUAGE plpgsql
+AS $$
+DECLARE
+    v_query TEXT;
+    v_result BOOLEAN;
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM information_schema.tables
+        WHERE table_name = p_table_name
+    ) THEN
+        RAISE EXCEPTION 'Table % does not exist.', p_table_name;
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE column_name = p_column_name
+            AND table_name = p_table_name
+    ) THEN
+        RAISE EXCEPTION 'Column % does not exist in table %.', p_column_name, p_table_name;
+    END IF;
+
+    v_query := format('SELECT EXISTS (SELECT 1 FROM %I WHERE %I = $1)', p_table_name, p_column_name);
+    EXECUTE v_query INTO v_result USING p_value;
+    RETURN v_result;
+END;
+$$;
+
 /* =====================================================
    STORED PROCEDURE
    ADD_DOCK_SP
@@ -230,4 +265,17 @@ Params:
     p_shortname: The short name of the station.
  Raises:
     Exception: If the program does not exist.
+';
+
+COMMENT ON FUNCTION VALIDATE_RECORD_EXISTS_FN(p_table_name TEXT, p_column_name TEXT, p_value INT) IS
+'Checks if a given value exists in a given column of a given table.
+Params:
+    p_table_name: The name of the table to check.
+    p_column_name: The name of the column to check.
+    p_value: The value to check against.
+Raises:
+    Exception: If the table not exist.
+    Exception: If the column does not exist in the table.
+Returns:
+    TRUE if the record exists, FALSE otherwise.
 ';
