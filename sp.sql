@@ -29,7 +29,6 @@ BEGIN
 END;
 $$;
 
-
 CREATE OR REPLACE PROCEDURE PURCHASE_MEMBERSHIP_SP(
     IN p_rider_id INT,
     IN p_membership_type VARCHAR(10),
@@ -85,6 +84,43 @@ BEGIN
         RAISE NOTICE 'New membership for riderid: %. membershipid: %. expiry: %', p_rider_id, p_membership_id,
         v_expires_at;
     END IF;
+END;
+$$;
+
+CREATE OR REPLACE PROCEDURE CREATE_STATION_SP(
+    IN p_station_code VARCHAR(80),
+    IN p_program_id INT,
+    IN p_address VARCHAR(120),
+    IN p_name VARCHAR(120),
+    IN p_latitude NUMERIC(9,6),
+    IN p_longitude NUMERIC(9,6),
+    IN p_capacity INT,
+    IN p_postalcode VARCHAR(20) DEFAULT NULL,
+    IN p_contactphone VARCHAR(30) DEFAULT NULL,
+    IN p_shortname VARCHAR(50) DEFAULT NULL
+)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    v_station_id INT;
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM program
+        WHERE programid = p_program_id
+    ) THEN
+        RAISE EXCEPTION 'ERR: Program with ProgramID % does not exist', p_program_id;
+    END IF;
+
+    INSERT INTO station (stationcode, programid, address, name, latitude, longitude, capacity, postalcode, contactphone, shortname)
+    VALUES (p_station_code, p_program_id, p_address, p_name, p_latitude,
+            p_longitude, p_capacity, p_postalcode, p_contactphone, p_shortname);
+
+    SELECT stationid INTO v_station_id
+    FROM station
+    WHERE stationcode = p_station_code;
+
+    RAISE NOTICE 'Station created successfully. StationID: %, Name: %, Code: %', v_station_id, p_name, p_station_code;
 END;
 $$;
 
@@ -174,5 +210,24 @@ Params:
     p_membership_type: The type of membership to purchase. Must be DAY, MONTH, or ANNUAL.
 Returns:
     p_membership_id: The ID of the membership that was purchased or extended.
+Raises:
+    Exception: If the rider does not exist.
+    Exception: If the membership type is invalid.
     ';
 
+COMMENT ON PROCEDURE CREATE_STATION_SP(VARCHAR, INT, VARCHAR, VARCHAR, NUMERIC, NUMERIC, INT, VARCHAR, VARCHAR, VARCHAR) IS
+'Creates a new station.
+Params:
+    p_station_code: The unique code for the station.
+    p_program_id: The ID of the program the station belongs to.
+    p_address: The address of the station.
+    p_name: The name of the station.
+    p_latitude: The latitude of the station.
+    p_longitude: The longitude of the station.
+    p_capacity: The maximum number of docks the station can hold.
+    p_postalcode: The postal code of the station.
+    p_contactphone: The contact phone number of the station.
+    p_shortname: The short name of the station.
+ Raises:
+    Exception: If the program does not exist.
+';
