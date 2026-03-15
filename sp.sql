@@ -165,4 +165,14 @@ CREATE OR REPLACE TRIGGER trg_log_dock_statement
     FOR EACH STATEMENT
 EXECUTE FUNCTION log_dock_statement_fn();
 
+-- Docs
+
+COMMENT ON PROCEDURE PURCHASE_MEMBERSHIP_SP(INT, VARCHAR, INT) IS
+'Purchases or extends a membership for a rider.
+Params:
+    p_rider_id: The ID of the rider to purchase membership for.
+    p_membership_type: The type of membership to purchase. Must be DAY, MONTH, or ANNUAL.
+Returns:
+    p_membership_id: The ID of the membership that was purchased or extended.
+    ';
 
