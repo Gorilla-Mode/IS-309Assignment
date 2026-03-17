@@ -159,15 +159,19 @@ CREATE OR REPLACE PROCEDURE CREATE_ACCOUNT_SP(
     IN p_apt        VARCHAR(20),
     IN p_city       VARCHAR(60),
     IN p_state      VARCHAR(60),
-    IN p_Zip        VARCHAR(20),
+    IN p_zip        VARCHAR(20),
     OUT p_account_id INT
 ) LANGUAGE plpgsql
 AS $$
-DECLARE
-    v_station_id INT;
+
 BEGIN
     RAISE NOTICE 'Work in progress';
-    RETURNING 0 as p_account_id;
+    INSERT INTO rider (firstname, lastname, email, phone, street, apt, city, state, zip) VALUES
+        (p_first_name, p_last_name, p_email, p_phone, p_street, p_apt,
+         p_city, p_state, p_zip)
+    RETURNING riderid INTO p_account_id;
+
+    RAISE NOTICE 'Create the account, riderId is : %', p_account_id;
 END;
 $$;
 
