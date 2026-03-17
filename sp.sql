@@ -148,6 +148,42 @@ BEGIN
 END;
 $$;
 
+
+
+CREATE OR REPLACE PROCEDURE CREATE_ACCOUNT_SP(
+    IN p_first_name VARCHAR(50),
+    IN p_last_name VARCHAR(50),
+    IN p_email VARCHAR(50),
+    IN p_phone VARCHAR(30),
+    IN p_street     VARCHAR(120),
+    IN p_apt        VARCHAR(20),
+    IN p_city       VARCHAR(60),
+    IN p_state      VARCHAR(60),
+    IN p_zip        VARCHAR(20),
+    OUT p_account_id INT
+) LANGUAGE plpgsql
+AS $$
+DECLARE
+    v_existing_email INT;
+BEGIN
+    IF p_first_name IS NULL OR p_last_name IS NULL OR p_email IS NULL THEN
+        RAISE EXCEPTION 'Parameters p_first_name, p_last_name, p_email can not be NULL';
+    end if;
+
+    SELECT count(*) INTO v_existing_email FROM rider where email = p_email;
+    IF v_existing_email != 0 THEN
+        RAISE EXCEPTION 'Account already exist with email address %', v_existing_email;
+    end if;
+
+    INSERT INTO rider (firstname, lastname, email, phone, street, apt, city, state, zip) VALUES
+        (p_first_name, p_last_name, p_email, p_phone, p_street, p_apt,
+         p_city, p_state, p_zip)
+    RETURNING riderid INTO p_account_id;
+
+    RAISE NOTICE 'Created the account, riderId is : %', p_account_id;
+END;
+$$;
+
 /* =====================================================
    ROW-LEVEL TRIGGER FUNCTION
    check_dock_capacity_fn
