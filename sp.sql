@@ -185,6 +185,251 @@ END;
 $$;
 
 /* =====================================================
+   STORED PROCEDURE
+   START_TRIP_SP
+   Purpose:
+   Adds a new Trip to the Trip table after checking the rider, bicycle and station is verified
+   Returns: The identifier of the new trip
+   ===================================================== */
+CREATE OR REPLACE PROCEDURE START_TRIP_SP(
+    IN p_rider_id INT,
+    IN p_start_station_id INT,
+    IN p_start_station_dock_id INT,
+    IN p_bicycle_id INT
+)
+    LANGUAGE plpgsql
+AS $$
+    DECLARE
+        latest_status TEXT;
+        bicycle_type TEXT;
+        p_trip_id INT;
+-- region START_TRIP_SP validations
+       
+/* Checks if the station exists, not just a random station */
+BEGIN
+    IF (NOT VALIDATE_RECORD_EXISTS_FN('station', 'stationid', p_start_station_id)) THEN
+        RAISE EXCEPTION 'Station with StationID % does not exist.', p_start_station_id;
+END IF;
+
+    /* Checks if the dock exists, not just a random dock */
+    
+        IF NOT EXISTS (
+            SELECT 1
+            FROM dock
+            WHERE stationid = p_start_station_id
+            AND docknumber = p_start_station_dock_id
+            ) THEN
+        RAISE EXCEPTION 'Dock % does not belong to StationID %.',
+            p_start_station_dock_id, p_start_station_id;
+    END IF;
+
+/* Checks if the Bicycle exists */
+
+    IF (NOT VALIDATE_RECORD_EXISTS_FN('bicycle', 'bicycleid', p_bicycle_id)) THEN
+        RAISE EXCEPTION 'Bicycle with BicycleID % does not exist.', p_bicycle_id;
+END IF;
+/* Checks if the Bicycle is AVAILABLE */
+    BEGIN
+        SELECT status INTO latest_status
+        FROM bicyclestatus
+        WHERE bicycleid = p_bicycle_id
+        ORDER BY recordedat DESC
+        LIMIT 1;
+
+        IF latest_status IS DISTINCT FROM 'AVAILABLE' THEN
+            RAISE EXCEPTION 'BicycleID % is not AVAILABLE in the newest record', p_bicycle_id;
+        END IF;
+    END;
+/* Checks if the rider exists */
+
+    IF NOT VALIDATE_RECORD_EXISTS_FN('rider', 'riderid', p_rider_id) THEN
+        RAISE EXCEPTION 'Rider with RiderID % does not exist.', p_start_station_id;
+    END IF;
+
+/* Checks if the stationstatus is renting bicycles */
+
+    IF NOT (SELECT isrenting 
+       FROM stationstatus 
+       WHERE stationstatusid = p_start_station_id) THEN
+       RAISE EXCEPTION 'Station with StationID % is not renting bicycles.', p_start_station_id;
+    END IF;
+
+/* Checks if the specified dock of that station is operational */
+
+    IF NOT (
+    SELECT isoperational
+    FROM dock
+    WHERE stationid = p_start_station_id
+      AND docknumber = p_start_station_dock_id
+    ) THEN
+    RAISE EXCEPTION 'Dock % at station % is not operational.', p_start_station_dock_id, p_start_station_id;
+    END IF;
+
+/* Checks if the bicycle classic is available at the specified station */
+
+-- Get selected bike type once
+    SELECT bicycletype
+    INTO bicycle_type
+    FROM bicycle
+    WHERE bicycleid = p_bicycle_id;
+
+    -- Check availability based on bike type
+    CASE bicycle_type
+        WHEN 'CLASSIC' THEN
+            IF (SELECT bikesavailclassic FROM stationstatus WHERE stationstatusid = p_start_station_id) <= 0 THEN
+                RAISE EXCEPTION 'No CLASSIC bikes available at station %.', p_start_station_id;
+            END IF;
+        WHEN 'ELECTRIC' THEN
+            IF (SELECT bikesavailelectric FROM stationstatus WHERE stationstatusid = p_start_station_id) <= 0 THEN
+                RAISE EXCEPTION 'No ELECTRIC bikes available at station %.', p_start_station_id;
+            END IF;
+        WHEN 'SMART' THEN
+            IF (SELECT bikesavailsmart FROM stationstatus WHERE stationstatusid = p_start_station_id) <= 0 THEN
+                RAISE EXCEPTION 'No SMART bikes available at station %.', p_start_station_id;
+            END IF;
+        WHEN 'CARGO' THEN
+            IF (SELECT bikesavailcargo FROM stationstatus WHERE stationstatusid = p_start_station_id) <= 0 THEN
+                RAISE EXCEPTION 'No CARGO bikes available at station %.', p_start_station_id;
+            END IF;
+        ELSE
+            RAISE EXCEPTION 'Unsupported bicycle type: %', bicycle_type;
+        END CASE;
+-- endregion
+    
+    /* Removes one of the available bikes from stationstatus since you will be using it (Based on the category of bike you chose) */
+    BEGIN
+        IF bicycle_type = 'CLASSIC' THEN
+            UPDATE stationstatus
+            SET bikesavailclassic = bikesavailclassic - 1
+            WHERE stationstatusid = p_start_station_id;
+        ELSIF bicycle_type = 'ELECTRIC' THEN
+            UPDATE stationstatus
+            SET bikesavailelectric = bikesavailelectric - 1
+            WHERE stationstatusid = p_start_station_id;
+        ELSIF bicycle_type = 'SMART' THEN
+            UPDATE stationstatus
+            SET bikesavailsmart = bikesavailsmart - 1
+            WHERE stationstatusid = p_start_station_id;
+        ELSIF bicycle_type = 'CARGO' THEN
+            UPDATE stationstatus
+            SET bikesavailcargo = bikesavailcargo - 1
+            WHERE stationstatusid = p_start_station_id;
+        END IF;
+    END;
+
+    -- Insert into the TRIP table (Main Task)
+INSERT INTO trip (
+    riderid,
+    bicycleid,
+    startstationid,
+    starttime,
+    tripfinished,
+    endstationid
+)
+VALUES (p_rider_id,
+        p_bicycle_id,
+        p_start_station_id,
+        CURRENT_TIMESTAMP,
+        FALSE,
+        p_start_station_id) -- Placeholder for endstationid since the trip is just starting
+        RETURNING tripid INTO p_trip_id;
+
+    RAISE NOTICE 'Trip started successfully. TripID: %', p_trip_id;
+    
+        -- Create a new bicyclestatus record to mark the bike as IN_USE
+        INSERT INTO bicyclestatus (bicycleid, recordedat, status)
+        VALUES (p_bicycle_id, CURRENT_TIMESTAMP, 'IN_USE');
+    
+END; 
+$$;
+
+/* =====================================================
+   STORED PROCEDURE
+   END_TRIP_SP
+   Purpose:
+   Updates an existing Trip in the Trip table after checking the trip is valid and calculating the total distance, elapsed time and cost.
+   Returns: ###
+   ===================================================== */
+CREATE OR REPLACE PROCEDURE END_TRIP_SP(
+    IN p_trip_id INT,
+    IN p_end_station_id INT
+)
+    LANGUAGE plpgsql
+AS $$
+DECLARE
+    v_bicycle_id INT;
+    v_start_station_id INT;
+    v_bicycle_type TEXT;
+BEGIN
+    -- Check trip exists
+    IF NOT VALIDATE_RECORD_EXISTS_FN('trip', 'tripid', p_trip_id) THEN
+        RAISE EXCEPTION 'Trip with TripID % does not exist.', p_trip_id;
+    END IF;
+
+    -- Check destination station exists
+    IF NOT VALIDATE_RECORD_EXISTS_FN('station', 'stationid', p_end_station_id) THEN
+        RAISE EXCEPTION 'Station with StationID % does not exist.', p_end_station_id;
+    END IF;
+
+    -- Check trip not already finished
+    IF (SELECT tripfinished FROM trip WHERE tripid = p_trip_id) THEN
+        RAISE EXCEPTION 'Trip with TripID % is already finished.', p_trip_id;
+    END IF;
+
+    -- Get bike and original start station from trip
+    SELECT bicycleid, startstationid
+    INTO v_bicycle_id, v_start_station_id
+    FROM trip
+    WHERE tripid = p_trip_id;
+
+    -- Check destination station accepts returns
+    IF NOT (SELECT acceptingreturns
+            FROM stationstatus
+            WHERE stationstatusid = p_end_station_id) THEN
+        RAISE EXCEPTION 'Station with StationID % is not accepting returns.', p_end_station_id;
+    END IF;
+
+    -- Finish trip
+    UPDATE trip
+    SET endtime = CURRENT_TIMESTAMP,
+        tripfinished = TRUE,
+        endstationid = p_end_station_id
+    WHERE tripid = p_trip_id;
+
+    RAISE NOTICE 'Trip with TripID % has been marked as finished.', p_trip_id;
+
+    -- Get bike type
+    SELECT bicycletype
+    INTO v_bicycle_type
+    FROM bicycle
+    WHERE bicycleid = v_bicycle_id;
+
+    -- Add returned bike to END station availability (not start station)
+    IF v_bicycle_type = 'CLASSIC' THEN
+        UPDATE stationstatus
+        SET bikesavailclassic = bikesavailclassic + 1
+        WHERE stationstatusid = p_end_station_id;
+    ELSIF v_bicycle_type = 'ELECTRIC' THEN
+        UPDATE stationstatus
+        SET bikesavailelectric = bikesavailelectric + 1
+        WHERE stationstatusid = p_end_station_id;
+    ELSIF v_bicycle_type = 'SMART' THEN
+        UPDATE stationstatus
+        SET bikesavailsmart = bikesavailsmart + 1
+        WHERE stationstatusid = p_end_station_id;
+    ELSIF v_bicycle_type = 'CARGO' THEN
+        UPDATE stationstatus
+        SET bikesavailcargo = bikesavailcargo + 1
+        WHERE stationstatusid = p_end_station_id;
+    END IF;
+
+    -- Mark bike available
+    INSERT INTO bicyclestatus (bicycleid, recordedat, status)
+    VALUES (v_bicycle_id, CURRENT_TIMESTAMP, 'AVAILABLE');
+END;
+$$;
+
+/* =====================================================
    ROW-LEVEL TRIGGER FUNCTION
    check_dock_capacity_fn
    Purpose:
