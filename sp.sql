@@ -148,6 +148,29 @@ BEGIN
 END;
 $$;
 
+
+
+CREATE OR REPLACE PROCEDURE CREATE_ACCOUNT_SP(
+    IN p_first_name VARCHAR(50),
+    IN p_last_name VARCHAR(50),
+    IN p_email VARCHAR(50),
+    IN p_phone VARCHAR(30),
+    IN p_street     VARCHAR(120),
+    IN p_apt        VARCHAR(20),
+    IN p_city       VARCHAR(60),
+    IN p_state      VARCHAR(60),
+    IN p_Zip        VARCHAR(20),
+    OUT p_account_id INT
+) LANGUAGE plpgsql
+AS $$
+DECLARE
+    v_station_id INT;
+BEGIN
+    RAISE NOTICE 'Work in progress';
+    RETURNING 0 as p_account_id;
+END;
+$$;
+
 /* =====================================================
    ROW-LEVEL TRIGGER FUNCTION
    check_dock_capacity_fn
