@@ -163,9 +163,15 @@ CREATE OR REPLACE PROCEDURE CREATE_ACCOUNT_SP(
     OUT p_account_id INT
 ) LANGUAGE plpgsql
 AS $$
-
+DECLARE
+    v_existing_email INT;
 BEGIN
-    RAISE NOTICE 'Work in progress';
+    SELECT count(*) INTO v_existing_email FROM rider where email = p_email;
+
+    IF v_existing_email != 0 THEN
+        RAISE EXCEPTION 'Account already exist with email address %', v_existing_email;
+    end if;
+
     INSERT INTO rider (firstname, lastname, email, phone, street, apt, city, state, zip) VALUES
         (p_first_name, p_last_name, p_email, p_phone, p_street, p_apt,
          p_city, p_state, p_zip)
