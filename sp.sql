@@ -166,8 +166,11 @@ AS $$
 DECLARE
     v_existing_email INT;
 BEGIN
-    SELECT count(*) INTO v_existing_email FROM rider where email = p_email;
+    IF p_first_name IS NULL OR p_last_name IS NULL OR p_email IS NULL THEN
+        RAISE EXCEPTION 'Parameters p_first_name, p_last_name, p_email can not be NULL';
+    end if;
 
+    SELECT count(*) INTO v_existing_email FROM rider where email = p_email;
     IF v_existing_email != 0 THEN
         RAISE EXCEPTION 'Account already exist with email address %', v_existing_email;
     end if;
