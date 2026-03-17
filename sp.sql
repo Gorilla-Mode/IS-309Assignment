@@ -177,7 +177,7 @@ BEGIN
          p_city, p_state, p_zip)
     RETURNING riderid INTO p_account_id;
 
-    RAISE NOTICE 'Create the account, riderId is : %', p_account_id;
+    RAISE NOTICE 'Created the account, riderId is : %', p_account_id;
 END;
 $$;
 
