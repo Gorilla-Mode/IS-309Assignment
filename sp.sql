@@ -148,7 +148,32 @@ BEGIN
 END;
 $$;
 
+CREATE OR REPLACE PROCEDURE CREATE_BICYCLE_SP(
+    IN p_bicycle_type VARCHAR(10),
+    IN p_make VARCHAR(50),
+    IN p_model VARCHAR(50),
+    IN p_color VARCHAR(30),
+    IN p_year_acquired INT,
+    OUT p_bicycle_id INT
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    IF p_bicycle_type IS NULL THEN
+        RAISE EXCEPTION 'ERR: p_bicycle_type cannot be NULL';
+    END IF;
 
+    IF p_bicycle_type NOT IN ('ELECTRIC', 'SMART', 'CLASSIC', 'CARGO') THEN
+        RAISE EXCEPTION 'ERR: Invalid bicycle type %. Must be ELECTRIC, SMART, CLASSIC, or CARGO.', p_bicycle_type;
+    END IF;
+
+    INSERT INTO bicycle (bicycletype, make, model, color, yearacquired)
+    VALUES (p_bicycle_type, p_make, p_model, p_color, p_year_acquired)
+    RETURNING bicycleid INTO p_bicycle_id;
+
+    RAISE NOTICE 'Bicycle created successfully. BicycleID: %', p_bicycle_id;
+END;
+$$;
 
 CREATE OR REPLACE PROCEDURE CREATE_ACCOUNT_SP(
     IN p_first_name VARCHAR(50),
