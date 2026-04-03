@@ -14,34 +14,24 @@
 -- =========================================================
 
 DO $$
+    DECLARE
+        role_name TEXT;
     BEGIN
-        IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'maintenance_role') THEN
-            CREATE ROLE maintenance_role;
-        END IF;
-    END
-$$;
-
-DO $$
-    BEGIN
-        IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'customer_support_role') THEN
-            CREATE ROLE customer_support_role;
-        END IF;
-    END
-$$;
-
-DO $$
-    BEGIN
-        IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'station_manager_role') THEN
-            CREATE ROLE station_manager_role;
-        END IF;
-    END
-$$;
-
-DO $$
-    BEGIN
-        IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'auditor_role') THEN
-            CREATE ROLE auditor_role;
-        END IF;
+        FOREACH role_name IN ARRAY ARRAY[
+            'maintenance_role',
+            'customer_support_role',
+            'station_manager_role',
+            'auditor_role'
+            ]
+            LOOP
+                IF NOT EXISTS (
+                    SELECT 1
+                    FROM pg_roles
+                    WHERE rolname = role_name
+                ) THEN
+                    EXECUTE format('CREATE ROLE %I', role_name);
+                END IF;
+            END LOOP;
     END
 $$;
 
@@ -97,9 +87,24 @@ GRANT SELECT, UPDATE ON stationstatus TO station_manager_role;
 -- 3D. TABLE PRIVILEGES: AUDITOR ROLE
 -- Audit and control role with read-only access to log and
 -- selected operational data.
+-- Access to dock_audit_log is granted only if the table
+-- exists, since it is created in sp.sql.
 -- =========================================================
 
-GRANT SELECT ON dock_audit_log TO auditor_role;
+DO $$
+    BEGIN
+        IF EXISTS (
+            SELECT 1
+            FROM pg_class c
+                     JOIN pg_namespace n ON n.oid = c.relnamespace
+            WHERE c.relname = 'dock_audit_log'
+              AND n.nspname = 'public'
+        ) THEN
+            GRANT SELECT ON public.dock_audit_log TO auditor_role;
+        END IF;
+    END
+$$;
+
 GRANT SELECT ON dock TO auditor_role;
 GRANT SELECT ON station TO auditor_role;
 GRANT SELECT ON stationstatus TO auditor_role;
@@ -110,9 +115,24 @@ GRANT SELECT ON trip TO auditor_role;
 -- 4. GRANT EXECUTE PRIVILEGES
 -- The station manager may execute the dock creation procedure
 -- when expanding or maintaining station capacity.
+-- The privilege is granted only if the procedure exists,
+-- since it is created in sp.sql.
 -- =========================================================
 
-GRANT EXECUTE ON PROCEDURE add_dock_sp(INTEGER, INTEGER, BOOLEAN) TO station_manager_role;
+DO $$
+    BEGIN
+        IF EXISTS (
+            SELECT 1
+            FROM pg_proc p
+                     JOIN pg_namespace n ON n.oid = p.pronamespace
+            WHERE p.proname = 'add_dock_sp'
+              AND n.nspname = 'public'
+              AND pg_get_function_identity_arguments(p.oid) = 'integer, integer, boolean'
+        ) THEN
+            GRANT EXECUTE ON PROCEDURE public.add_dock_sp(INTEGER, INTEGER, BOOLEAN) TO station_manager_role;
+        END IF;
+    END
+$$;
 
 
 -- =========================================================
@@ -122,34 +142,32 @@ GRANT EXECUTE ON PROCEDURE add_dock_sp(INTEGER, INTEGER, BOOLEAN) TO station_man
 -- =========================================================
 
 DO $$
+    DECLARE
+        user_name TEXT;
     BEGIN
-        IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'ola_maintenance') THEN
-            CREATE ROLE ola_maintenance LOGIN PASSWORD 'Ola123!';
-        END IF;
-    END
-$$;
-
-DO $$
-    BEGIN
-        IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'emma_support') THEN
-            CREATE ROLE emma_support LOGIN PASSWORD 'Emma123!';
-        END IF;
-    END
-$$;
-
-DO $$
-    BEGIN
-        IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'lars_station_manager') THEN
-            CREATE ROLE lars_station_manager LOGIN PASSWORD 'Lars123!';
-        END IF;
-    END
-$$;
-
-DO $$
-    BEGIN
-        IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'nina_auditor') THEN
-            CREATE ROLE nina_auditor LOGIN PASSWORD 'Nina123!';
-        END IF;
+        FOREACH user_name IN ARRAY ARRAY[
+            'ola_maintenance',
+            'emma_support',
+            'lars_station_manager',
+            'nina_auditor'
+            ]
+            LOOP
+                IF NOT EXISTS (
+                    SELECT 1
+                    FROM pg_roles
+                    WHERE rolname = user_name
+                ) THEN
+                    EXECUTE format('CREATE ROLE %I LOGIN PASSWORD %L',
+                                   user_name,
+                                   CASE user_name
+                                       WHEN 'ola_maintenance' THEN 'Ola123!'
+                                       WHEN 'emma_support' THEN 'Emma123!'
+                                       WHEN 'lars_station_manager' THEN 'Lars123!'
+                                       WHEN 'nina_auditor' THEN 'Nina123!'
+                                       END
+                            );
+                END IF;
+            END LOOP;
     END
 $$;
 
