@@ -88,7 +88,18 @@ GRANT SELECT, UPDATE ON stationstatus TO station_manager_role;
 -- selected operational data.
 -- =========================================================
 
-GRANT SELECT ON dock_audit_log TO auditor_role;
+-- dock_audit_log is created by sp.sql; only grant if the table already exists.
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM pg_class c
+        JOIN pg_namespace n ON n.oid = c.relnamespace
+        WHERE c.relname = 'dock_audit_log' AND c.relkind = 'r' AND n.nspname = 'public'
+    ) THEN
+        EXECUTE 'GRANT SELECT ON dock_audit_log TO auditor_role';
+    END IF;
+END
+$$;
 GRANT SELECT ON dock TO auditor_role;
 GRANT SELECT ON station TO auditor_role;
 GRANT SELECT ON stationstatus TO auditor_role;
@@ -101,7 +112,19 @@ GRANT SELECT ON trip TO auditor_role;
 -- when expanding or maintaining station capacity.
 -- =========================================================
 
-GRANT EXECUTE ON PROCEDURE add_dock_sp(INTEGER, INTEGER, BOOLEAN) TO station_manager_role;
+-- add_dock_sp is created by sp.sql; only grant if the procedure already exists.
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM pg_proc p
+        JOIN pg_namespace n ON n.oid = p.pronamespace
+        WHERE p.proname = 'add_dock_sp' AND n.nspname = 'public'
+          AND pg_get_function_identity_arguments(p.oid) = 'integer, integer, boolean'
+    ) THEN
+        EXECUTE 'GRANT EXECUTE ON PROCEDURE add_dock_sp(INTEGER, INTEGER, BOOLEAN) TO station_manager_role';
+    END IF;
+END
+$$;
 
 
 -- =========================================================
