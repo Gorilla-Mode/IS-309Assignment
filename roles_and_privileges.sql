@@ -139,6 +139,17 @@ $$;
 -- 5. CREATE INDIVIDUAL ROLES
 -- These are example employee accounts. They are created only
 -- if they do not already exist.
+--
+-- SECURITY NOTE: Passwords are NOT set here to avoid storing
+-- credentials in version control. After running this script,
+-- set each user's password securely using ALTER ROLE, for
+-- example via a local script (see set_passwords_example.sql)
+-- or by running the statements interactively:
+--
+--   ALTER ROLE ola_maintenance       PASSWORD '<strong-password>';
+--   ALTER ROLE emma_support          PASSWORD '<strong-password>';
+--   ALTER ROLE lars_station_manager  PASSWORD '<strong-password>';
+--   ALTER ROLE nina_auditor          PASSWORD '<strong-password>';
 -- =========================================================
 
 DO $$
@@ -157,15 +168,7 @@ DO $$
                     FROM pg_roles
                     WHERE rolname = user_name
                 ) THEN
-                    EXECUTE format('CREATE ROLE %I LOGIN PASSWORD %L',
-                                   user_name,
-                                   CASE user_name
-                                       WHEN 'ola_maintenance' THEN 'Ola123!'
-                                       WHEN 'emma_support' THEN 'Emma123!'
-                                       WHEN 'lars_station_manager' THEN 'Lars123!'
-                                       WHEN 'nina_auditor' THEN 'Nina123!'
-                                       END
-                            );
+                    EXECUTE format('CREATE ROLE %I LOGIN', user_name);
                 END IF;
             END LOOP;
     END

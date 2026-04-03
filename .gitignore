@@ -11,6 +11,9 @@
 *.sln.docstates
 *.env
 
+# Local password scripts – never commit files containing real credentials
+set_passwords_local.sql
+
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 
