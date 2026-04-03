@@ -137,8 +137,10 @@ $$;
 
 -- =========================================================
 -- 5. CREATE INDIVIDUAL ROLES
--- These are example employee accounts. They are created only
--- if they do not already exist.
+-- These are example employee accounts. Each role is created
+-- if it does not already exist, and then ALTER ROLE is run
+-- unconditionally to enforce the LOGIN attribute so that
+-- rerunning the script always reconciles the desired state.
 --
 -- SECURITY NOTE: Passwords are NOT set here to avoid storing
 -- credentials in version control. After running this script,
@@ -170,6 +172,9 @@ DO $$
                 ) THEN
                     EXECUTE format('CREATE ROLE %I LOGIN', user_name);
                 END IF;
+                -- Enforce LOGIN regardless of whether the role was just
+                -- created or already existed, ensuring idempotency.
+                EXECUTE format('ALTER ROLE %I LOGIN', user_name);
             END LOOP;
     END
 $$;
