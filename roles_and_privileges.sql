@@ -3,7 +3,12 @@
 -- This script creates additional group and individual roles
 -- for the Bcycle system and grants privileges based on job
 -- responsibilities.
--- The script is written to be safe to run multiple times.
+-- Prerequisite: run this script only after the base schema
+-- and stored procedures have been created by db.sql/sp.sql,
+-- since later GRANT statements may reference existing schema
+-- objects such as tables, procedures, and the audit log.
+-- Once those prerequisite objects exist, this script is safe
+-- to run multiple times.
 -- =========================================================
 
 
