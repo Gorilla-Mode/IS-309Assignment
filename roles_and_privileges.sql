@@ -19,38 +19,22 @@
 -- =========================================================
 
 DO $$
-    BEGIN
-        IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'maintenance_role') THEN
-            CREATE ROLE maintenance_role;
+DECLARE
+    role_name TEXT;
+BEGIN
+    FOREACH role_name IN ARRAY ARRAY[
+        'maintenance_role',
+        'customer_support_role',
+        'station_manager_role',
+        'auditor_role'
+    ]
+    LOOP
+        IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = role_name) THEN
+            EXECUTE format('CREATE ROLE %I', role_name);
         END IF;
-    END
+    END LOOP;
+END
 $$;
-
-DO $$
-    BEGIN
-        IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'customer_support_role') THEN
-            CREATE ROLE customer_support_role;
-        END IF;
-    END
-$$;
-
-DO $$
-    BEGIN
-        IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'station_manager_role') THEN
-            CREATE ROLE station_manager_role;
-        END IF;
-    END
-$$;
-
-DO $$
-    BEGIN
-        IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'auditor_role') THEN
-            CREATE ROLE auditor_role;
-        END IF;
-    END
-$$;
-
-
 -- =========================================================
 -- 2. GRANT SCHEMA ACCESS
 -- Users need USAGE on the schema to access objects inside it.
