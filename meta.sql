@@ -3,9 +3,9 @@ SELECT pg_size_pretty(pg_database_size('bcylce')) as db_size;
 SELECT
   table_schema,
   table_name,
-  pg_size_pretty(total_bytes - heap_bytes - indexes_bytes) AS toast_bytes,
+  pg_size_pretty(total_bytes - heap_bytes - index_bytes) AS toast_bytes,
   pg_size_pretty(heap_bytes) AS heap_size,
-  pg_size_pretty(indexes_bytes) AS indexes_size,
+  pg_size_pretty(index_bytes) AS index_size,
   pg_size_pretty(total_bytes) AS total_size
 FROM
 (
@@ -13,12 +13,41 @@ FROM
     table_schema,
     table_name,
     pg_relation_size(format('%I.%I', table_schema, table_name)) AS heap_bytes,
-    pg_indexes_size(format('%I.%I', table_schema, table_name)) AS indexes_bytes,
+    pg_indexes_size(format('%I.%I', table_schema, table_name)) AS index_bytes,
     pg_total_relation_size(format('%I.%I', table_schema, table_name)) AS total_bytes
   FROM information_schema.tables
   WHERE table_type = 'BASE TABLE' AND table_schema = 'public'
 ) AS relation_size
 ORDER BY total_bytes DESC;
+
+CREATE EXTENSION IF NOT EXISTS pageinspect;
+
+SELECT
+    stat.relname AS table_name,
+    pc.relpages AS full_pages,
+    CASE
+        WHEN pc.relpages > 0 THEN
+            (SELECT count(*) FROM heap_page_items(get_raw_page(stat.relname, 0)))
+    END AS real_max_tuples_in_page,
+    CASE
+        WHEN pc.relpages > 0 THEN NULL
+        WHEN pc.relpages = 0 AND stat.n_live_tup > 0 THEN
+            (SELECT FLOOR((current_setting('block_size')::int - 32) / (AVG(lp_len) + 8))
+                FROM heap_page_items(get_raw_page(stat.relname, 0)))
+    END AS est_max_tuples_in_page,
+    CASE
+        WHEN stat.n_live_tup = 0 THEN NULL
+        WHEN pc.relpages = 0 THEN
+            stat.n_live_tup
+        WHEN pc.relpages > 0 THEN
+            stat.n_live_tup / pc.relpages
+    END AS tuples_in_allocated_page,
+    (pc.relpages > 0) AS has_full_page
+FROM pg_stat_user_tables stat
+LEFT JOIN pg_class pc ON stat.relname = pc.relname
+    AND pc.relnamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'public')
+WHERE stat.schemaname = 'public'
+ORDER BY stat.relname;
 
 DROP VIEW IF EXISTS v_data_dict_tables;
 
