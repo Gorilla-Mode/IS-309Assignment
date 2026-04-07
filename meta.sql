@@ -20,10 +20,12 @@ FROM
 ) AS relation_size
 ORDER BY total_bytes DESC;
 
+DROP VIEW IF EXISTS v_data_dict_tables;
+
 CREATE OR REPLACE VIEW v_data_dict_tables AS
     SELECT
-        schemaname AS table_schema,
-        relname AS table_name,
+        schemaname AS tab_schema,
+        relname AS tab_name,
     CASE
         WHEN relname LIKE '%program' THEN 'Bike-sharing programs in different cities'
         WHEN relname LIKE '%station' THEN 'Physical docking stations'
@@ -36,11 +38,21 @@ CREATE OR REPLACE VIEW v_data_dict_tables AS
         WHEN relname LIKE '%bicyclest%' THEN 'Historical bicycle status'
         WHEN relname LIKE '%dock_%' THEN 'Audit log'
         ELSE 'No description'
-    END AS table_description,
+    END AS tab_desc,
         (SELECT COUNT(*) FROM information_schema.columns
                          WHERE table_schema = schemaname
-                         AND table_name = relname) AS column_count,
-        n_live_tup AS row_count
+                         AND table_name = relname) AS col_count,
+        n_live_tup AS row_count,
+        (SELECT COUNT(*) FROM pg_indexes WHERE tablename = relname) AS idx_count,
+        (SELECT COUNT(*) FROM information_schema.table_constraints
+                         WHERE table_schema = schemaname
+                         AND table_name = relname
+                         AND constraint_type = 'FOREIGN KEY') AS fk_count,
+        (SELECT COUNT(*) FROM information_schema.table_constraints
+                         WHERE table_schema = schemaname
+                         AND table_name = relname
+                         AND constraint_type = 'CHECK') AS chk_count,
+        pg_size_pretty(pg_total_relation_size(format('%I.%I', schemaname, relname))) AS tab_size
 FROM pg_stat_user_tables
 WHERE schemaname = 'public'
 ORDER BY relname;
