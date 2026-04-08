@@ -5,6 +5,7 @@ CREATE OR REPLACE FUNCTION VALIDATE_RECORD_EXISTS_FN(
 )
     RETURNS BOOLEAN
     LANGUAGE plpgsql
+    SECURITY DEFINER
 AS $$
 DECLARE
     v_query TEXT;
@@ -46,6 +47,7 @@ CREATE OR REPLACE PROCEDURE ADD_DOCK_SP(
     IN p_is_operational BOOLEAN DEFAULT TRUE
 )
     LANGUAGE plpgsql
+    SECURITY DEFINER
 AS $$
 BEGIN
     IF NOT VALIDATE_RECORD_EXISTS_FN('station', 'stationid', p_station_id) THEN
@@ -66,6 +68,7 @@ CREATE OR REPLACE PROCEDURE PURCHASE_MEMBERSHIP_SP(
     OUT p_membership_id INT
 )
 LANGUAGE plpgsql
+SECURITY DEFINER
 AS $$
 DECLARE
     v_purchased_at TIMESTAMP;
@@ -128,6 +131,7 @@ CREATE OR REPLACE PROCEDURE CREATE_STATION_SP(
     IN p_shortname VARCHAR(50) DEFAULT NULL
 )
 LANGUAGE plpgsql
+SECURITY DEFINER
 AS $$
 DECLARE
     v_station_id INT;
@@ -157,6 +161,7 @@ CREATE OR REPLACE PROCEDURE CREATE_BICYCLE_SP(
     OUT p_bicycle_id INT
 )
 LANGUAGE plpgsql
+SECURITY DEFINER
 AS $$
 BEGIN
     IF p_bicycle_type IS NULL THEN
@@ -177,9 +182,9 @@ $$;
 
 CREATE OR REPLACE PROCEDURE CREATE_ACCOUNT_SP(
     IN p_first_name VARCHAR(50),
-    IN p_last_name VARCHAR(50),
-    IN p_email VARCHAR(50),
-    IN p_phone VARCHAR(30),
+    IN p_last_name  VARCHAR(50),
+    IN p_email      VARCHAR(50),
+    IN p_phone      VARCHAR(30),
     IN p_street     VARCHAR(120),
     IN p_apt        VARCHAR(20),
     IN p_city       VARCHAR(60),
@@ -187,6 +192,7 @@ CREATE OR REPLACE PROCEDURE CREATE_ACCOUNT_SP(
     IN p_zip        VARCHAR(20),
     OUT p_account_id INT
 ) LANGUAGE plpgsql
+    SECURITY DEFINER
 AS $$
 DECLARE
     v_existing_email INT;
@@ -223,6 +229,7 @@ CREATE OR REPLACE PROCEDURE START_TRIP_SP(
     IN p_bicycle_id INT
 )
     LANGUAGE plpgsql
+    SECURITY DEFINER
 AS $$
     DECLARE
         latest_status TEXT;
@@ -380,6 +387,7 @@ CREATE OR REPLACE PROCEDURE END_TRIP_SP(
     IN p_end_station_id INT
 )
     LANGUAGE plpgsql
+    SECURITY DEFINER
 AS $$
 DECLARE
     v_bicycle_id INT;
@@ -464,6 +472,7 @@ $$;
 CREATE OR REPLACE FUNCTION check_dock_capacity_fn()
     RETURNS TRIGGER
     LANGUAGE plpgsql
+    SECURITY DEFINER
 AS $$
 DECLARE
     v_capacity INT;
