@@ -1,4 +1,97 @@
 -- =========================================================
+-- Required roles
+-- This part focuses on the roles required for assignment 3
+-- =========================================================
+
+
+-- =========================================================
+-- 1. CREATE GROUP ROLES
+-- These roles represent job functions in the Bcycle system.
+-- They are created only if they do not already exist.
+-- =========================================================
+
+DO $$
+    DECLARE
+        role_name TEXT;
+    BEGIN
+        FOREACH role_name IN ARRAY ARRAY[
+            'insight_role',                 -- a
+            'bcycle_administrative_role',   -- b
+            'account_administrator_role'    -- c
+        ]
+            LOOP
+                IF NOT EXISTS (
+                    SELECT 1
+                    FROM pg_roles
+                    WHERE rolname = role_name
+                ) THEN
+                    EXECUTE format('CREATE ROLE %I', role_name);
+                END IF;
+            END LOOP;
+    END
+$$;
+
+
+-- =========================================================
+-- 2. GRANT SCHEMA ACCESS
+-- Users need USAGE on the schema to access objects inside it.
+-- =========================================================
+
+GRANT USAGE ON SCHEMA public TO insight_role;
+GRANT USAGE ON SCHEMA public TO bcycle_administrative_role;
+GRANT USAGE ON SCHEMA public TO account_administrator_role;
+
+-- =========================================================
+-- 3. REVOKE DEFAULT EXE3CUTE ACCESS
+-- Revoke default access on procedures and functions
+-- =========================================================
+
+REVOKE EXECUTE ON PROCEDURE add_dock_sp(INT, INT, BOOLEAN) FROM PUBLIC;
+REVOKE EXECUTE ON PROCEDURE purchase_membership_sp(INT, VARCHAR, INT) FROM PUBLIC;
+REVOKE EXECUTE ON PROCEDURE create_station_sp(VARCHAR, INT, VARCHAR, VARCHAR, NUMERIC, NUMERIC, INT, VARCHAR, VARCHAR, VARCHAR) FROM PUBLIC;
+REVOKE EXECUTE ON PROCEDURE create_bicycle_sp(VARCHAR, VARCHAR, VARCHAR, VARCHAR, INT, INT) FROM PUBLIC;
+REVOKE EXECUTE ON PROCEDURE create_account_sp(VARCHAR, VARCHAR, VARCHAR, VARCHAR, VARCHAR, VARCHAR, VARCHAR, VARCHAR, VARCHAR) FROM PUBLIC;
+REVOKE EXECUTE ON PROCEDURE start_trip_sp(INT, INT, INT, INT) FROM PUBLIC;
+REVOKE EXECUTE ON PROCEDURE end_trip_sp(INT, INT) FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION validate_record_exists_fn(TEXT, TEXT, INT) FROM PUBLIC;
+
+
+-- =========================================================
+-- 4A. TABLE PRIVILEGES: INSIGHT ROLE
+-- Give read only access on tables to insight role.
+-- =========================================================
+
+GRANT SELECT ON Program, Station, Dock, Rider, Membership, Bicycle, Trip, StationStatus, BicycleStatus
+TO insight_role;
+
+-- =========================================================
+-- 4B. TABLE PRIVILEGES: BCYCLE ADMINISTRATIVE ROLE
+-- =========================================================
+
+GRANT EXECUTE ON FUNCTION VALIDATE_RECORD_EXISTS_FN(TEXT, TEXT, INT) TO bcycle_administrative_role;
+GRANT EXECUTE ON PROCEDURE ADD_DOCK_SP(INT, INT, BOOLEAN) TO bcycle_administrative_role;
+GRANT EXECUTE ON PROCEDURE PURCHASE_MEMBERSHIP_SP(INT, VARCHAR(10), INT) TO bcycle_administrative_role;
+GRANT EXECUTE ON PROCEDURE CREATE_STATION_SP(VARCHAR(80), INT, VARCHAR(120), VARCHAR(120), NUMERIC(9,6), NUMERIC(9,6),
+    INT, VARCHAR(20), VARCHAR(30), VARCHAR(50)) TO bcycle_administrative_role;
+GRANT EXECUTE ON PROCEDURE CREATE_BICYCLE_SP(VARCHAR(10), VARCHAR(50), VARCHAR(50), VARCHAR(30), INT, INT)
+    TO bcycle_administrative_role;
+GRANT EXECUTE ON PROCEDURE CREATE_ACCOUNT_SP(VARCHAR(50), VARCHAR(50), VARCHAR(50), VARCHAR(30), VARCHAR(120),
+    VARCHAR(20), VARCHAR(60), VARCHAR(60), VARCHAR(20))   TO bcycle_administrative_role;
+GRANT EXECUTE ON PROCEDURE START_TRIP_SP(INT, INT, INT, INT) TO bcycle_administrative_role;
+GRANT EXECUTE ON PROCEDURE END_TRIP_SP(INT, INT) TO bcycle_administrative_role;
+
+-- =========================================================
+-- 4C. TABLE PRIVILEGES: ACCOUNT ADMINISTRATOR ROLE
+-- =========================================================
+
+GRANT EXECUTE ON PROCEDURE CREATE_ACCOUNT_SP(VARCHAR(50), VARCHAR(50), VARCHAR(50), VARCHAR(30), VARCHAR(120),
+    VARCHAR(20), VARCHAR(60), VARCHAR(60), VARCHAR(20)) TO account_administrator_role;
+GRANT EXECUTE ON PROCEDURE PURCHASE_MEMBERSHIP_SP(INT, VARCHAR(10), INT) TO account_administrator_role;
+GRANT EXECUTE ON PROCEDURE START_TRIP_SP(INT, INT, INT, INT) TO account_administrator_role;
+
+
+
+-- =========================================================
 -- Bcycle Database: Additional Roles and Privileges
 -- This script creates additional group and individual roles
 -- for the Bcycle system and grants privileges based on job
@@ -21,9 +114,7 @@ DO $$
             'maintenance_role',
             'customer_support_role',
             'station_manager_role',
-            'auditor_role',
-
-            'insight_role'
+            'auditor_role'
             ]
             LOOP
                 IF NOT EXISTS (
@@ -38,6 +129,8 @@ DO $$
 $$;
 
 
+
+
 -- =========================================================
 -- 2. GRANT SCHEMA ACCESS
 -- Users need USAGE on the schema to access objects inside it.
@@ -48,7 +141,7 @@ GRANT USAGE ON SCHEMA public TO customer_support_role;
 GRANT USAGE ON SCHEMA public TO station_manager_role;
 GRANT USAGE ON SCHEMA public TO auditor_role;
 
-GRANT USAGE ON SCHEMA public TO insight_role;
+
 
 
 -- =========================================================

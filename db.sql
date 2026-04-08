@@ -74,8 +74,8 @@ CREATE TABLE IF NOT EXISTS Trip (
                       EndTime             TIMESTAMPTZ,
                       TotalDistance       NUMERIC(8,2) CHECK (TotalDistance IS NULL OR TotalDistance >= 0),
                       TotalElapsedSeconds INT CHECK (TotalElapsedSeconds IS NULL OR TotalElapsedSeconds >= 0),
-                      TotalCost           NUMERIC(10,2) CHECK (TotalCost IS NULL OR TotalCost >= 0)
-                      TripFinished        BOOLEAN NOT NULL DEFAULT TRUE,
+                      TotalCost           NUMERIC(10,2) CHECK (TotalCost IS NULL OR TotalCost >= 0),
+                      TripFinished        BOOLEAN NOT NULL DEFAULT TRUE
 );
 
 CREATE TABLE IF NOT EXISTS StationStatus (
