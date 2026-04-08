@@ -101,8 +101,8 @@ SELECT
     cols.numeric_scale AS num_scale,
     cols.is_nullable,
     cols.column_default AS col_default_val,
-    string_agg(DISTINCT tc.constraint_type, ', ' ORDER BY tc.constraint_type) AS cons_type,
-    string_agg(DISTINCT tc.constraint_name, ', ' ORDER BY tc.constraint_name) AS cons_name,
+    string_agg(tc.constraint_type, ', ' ORDER BY tc.constraint_type) AS cons_type,
+    string_agg(tc.constraint_name, ', ' ORDER BY tc.constraint_type) AS cons_name,
     CASE
         -- Column descriptions, AI used
         -- Program table
@@ -224,3 +224,33 @@ GROUP BY cols.table_schema, cols.table_name, cols.column_name, cols.data_type,
          cols.character_maximum_length, cols.numeric_precision, cols.numeric_scale,
          cols.is_nullable, cols.column_default
 ORDER BY cols.table_name;
+
+CREATE OR REPLACE VIEW v_data_dict_program AS
+SELECT * FROM v_data_dict_columns WHERE tab_name = 'program' ORDER BY col_name;
+
+CREATE OR REPLACE VIEW v_data_dict_station AS
+SELECT * FROM v_data_dict_columns WHERE tab_name = 'station' ORDER BY col_name;
+
+CREATE OR REPLACE VIEW v_data_dict_dock AS
+SELECT * FROM v_data_dict_columns WHERE tab_name = 'dock' ORDER BY col_name;
+
+CREATE OR REPLACE VIEW v_data_dict_rider AS
+SELECT * FROM v_data_dict_columns WHERE tab_name = 'rider' ORDER BY col_name;
+
+CREATE OR REPLACE VIEW v_data_dict_membership AS
+SELECT * FROM v_data_dict_columns WHERE tab_name = 'membership' ORDER BY col_name;
+
+CREATE OR REPLACE VIEW v_data_dict_bicycle AS
+SELECT * FROM v_data_dict_columns WHERE tab_name = 'bicycle' ORDER BY col_name;
+
+CREATE OR REPLACE VIEW v_data_dict_trip AS
+SELECT * FROM v_data_dict_columns WHERE tab_name = 'trip' ORDER BY col_name;
+
+CREATE OR REPLACE VIEW v_data_dict_stationstatus AS
+SELECT * FROM v_data_dict_columns WHERE tab_name = 'stationstatus' ORDER BY col_name;
+
+CREATE OR REPLACE VIEW v_data_dict_bicyclestatus AS
+SELECT * FROM v_data_dict_columns WHERE tab_name = 'bicyclestatus' ORDER BY col_name;
+
+CREATE OR REPLACE VIEW v_data_dict_dock_audit_log AS
+SELECT * FROM v_data_dict_columns WHERE tab_name = 'dock_audit_log' ORDER BY col_name;
