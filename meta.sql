@@ -84,7 +84,7 @@ CREATE OR REPLACE VIEW v_data_dict_tables AS
         (SELECT COUNT(*) FROM information_schema.table_constraints
                          WHERE table_schema = schemaname
                          AND table_name = relname
-                         AND constraint_type = 'CHECK') AS chk_count,
+                         AND constraint_type = 'CHECK' AND constraint_name NOT LIKE '%not_null%') AS chk_count,
         pg_size_pretty(pg_total_relation_size(format('%I.%I', schemaname, relname))) AS tab_size
 FROM pg_stat_user_tables
 WHERE schemaname = 'public'
