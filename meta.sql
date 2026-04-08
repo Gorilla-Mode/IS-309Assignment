@@ -92,114 +92,135 @@ ORDER BY relname;
 
 CREATE OR REPLACE VIEW v_data_dict_columns AS
 SELECT
-    table_schema AS tab_schema,
-    table_name AS tab_name,
-    column_name AS col_name,
-    data_type,
-    is_nullable,
+    cols.table_schema AS tab_schema,
+    cols.table_name AS tab_name,
+    cols.column_name AS col_name,
+    cols.data_type,
+    cols.character_maximum_length AS char_max_length,
+    cols.numeric_precision AS num_precision,
+    cols.numeric_scale AS num_scale,
+    cols.is_nullable,
+    cols.column_default AS col_default_val,
+    string_agg(DISTINCT tc.constraint_type, ', ' ORDER BY tc.constraint_type) AS cons_type,
+    string_agg(DISTINCT tc.constraint_name, ', ' ORDER BY tc.constraint_name) AS cons_name,
     CASE
+        -- Column descriptions, AI used
         -- Program table
-        WHEN format('%I.%I', table_name, column_name) = 'program.programid' THEN 'Unique identifier for program'
-        WHEN format('%I.%I', table_name, column_name) = 'program.programcode' THEN 'Unique code for program (e.g., city code)'
-        WHEN format('%I.%I', table_name, column_name) = 'program.countrycode' THEN 'ISO 2-letter country code where program operates'
-        WHEN format('%I.%I', table_name, column_name) = 'program.name' THEN 'Full name of bike-sharing program'
-        WHEN format('%I.%I', table_name, column_name) = 'program.location' THEN 'Primary location/city of program headquarters'
-        WHEN format('%I.%I', table_name, column_name) = 'program.phone' THEN 'Contact phone number for program'
-        WHEN format('%I.%I', table_name, column_name) = 'program.email' THEN 'Contact email address for program'
-        WHEN format('%I.%I', table_name, column_name) = 'program.timezone' THEN 'Timezone where program operates'
-        WHEN format('%I.%I', table_name, column_name) = 'program.url' THEN 'Official website URL of program'
-        WHEN format('%I.%I', table_name, column_name) = 'program.shortname' THEN 'Abbreviated name for program display'
+        WHEN format('%I.%I', cols.table_name, cols.column_name) = 'program.programid' THEN 'Unique identifier for program'
+        WHEN format('%I.%I', cols.table_name, cols.column_name) = 'program.programcode' THEN 'Unique code for program (e.g., city code)'
+        WHEN format('%I.%I', cols.table_name, cols.column_name) = 'program.countrycode' THEN 'ISO 2-letter country code where program operates'
+        WHEN format('%I.%I', cols.table_name, cols.column_name) = 'program.name' THEN 'Full name of bike-sharing program'
+        WHEN format('%I.%I', cols.table_name, cols.column_name) = 'program.location' THEN 'Primary location/city of program headquarters'
+        WHEN format('%I.%I', cols.table_name, cols.column_name) = 'program.phone' THEN 'Contact phone number for program'
+        WHEN format('%I.%I', cols.table_name, cols.column_name) = 'program.email' THEN 'Contact email address for program'
+        WHEN format('%I.%I', cols.table_name, cols.column_name) = 'program.timezone' THEN 'Timezone where program operates'
+        WHEN format('%I.%I', cols.table_name, cols.column_name) = 'program.url' THEN 'Official website URL of program'
+        WHEN format('%I.%I', cols.table_name, cols.column_name) = 'program.shortname' THEN 'Abbreviated name for program display'
 
         -- Station table
-        WHEN format('%I.%I', table_name, column_name) = 'station.stationid' THEN 'Unique identifier for station'
-        WHEN format('%I.%I', table_name, column_name) = 'station.stationcode' THEN 'Unique code for station (e.g., station location code)'
-        WHEN format('%I.%I', table_name, column_name) = 'station.programid' THEN 'Foreign key to Program table'
-        WHEN format('%I.%I', table_name, column_name) = 'station.address' THEN 'Street address of station'
-        WHEN format('%I.%I', table_name, column_name) = 'station.name' THEN 'Display name of station'
-        WHEN format('%I.%I', table_name, column_name) = 'station.latitude' THEN 'Geographic latitude coordinate'
-        WHEN format('%I.%I', table_name, column_name) = 'station.longitude' THEN 'Geographic longitude coordinate'
-        WHEN format('%I.%I', table_name, column_name) = 'station.capacity' THEN 'Maximum number of bikes/docks station can hold'
-        WHEN format('%I.%I', table_name, column_name) = 'station.postalcode' THEN 'Postal/ZIP code of station location'
-        WHEN format('%I.%I', table_name, column_name) = 'station.contactphone' THEN 'Contact phone for station-specific issues'
-        WHEN format('%I.%I', table_name, column_name) = 'station.shortname' THEN 'Abbreviated station name for display'
+        WHEN format('%I.%I', cols.table_name, cols.column_name) = 'station.stationid' THEN 'Unique identifier for station'
+        WHEN format('%I.%I', cols.table_name, cols.column_name) = 'station.stationcode' THEN 'Unique code for station (e.g., station location code)'
+        WHEN format('%I.%I', cols.table_name, cols.column_name) = 'station.programid' THEN 'Foreign key to Program table'
+        WHEN format('%I.%I', cols.table_name, cols.column_name) = 'station.address' THEN 'Street address of station'
+        WHEN format('%I.%I', cols.table_name, cols.column_name) = 'station.name' THEN 'Display name of station'
+        WHEN format('%I.%I', cols.table_name, cols.column_name) = 'station.latitude' THEN 'Geographic latitude coordinate'
+        WHEN format('%I.%I', cols.table_name, cols.column_name) = 'station.longitude' THEN 'Geographic longitude coordinate'
+        WHEN format('%I.%I', cols.table_name, cols.column_name) = 'station.capacity' THEN 'Maximum number of bikes/docks station can hold'
+        WHEN format('%I.%I', cols.table_name, cols.column_name) = 'station.postalcode' THEN 'Postal/ZIP code of station location'
+        WHEN format('%I.%I', cols.table_name, cols.column_name) = 'station.contactphone' THEN 'Contact phone for station-specific issues'
+        WHEN format('%I.%I', cols.table_name, cols.column_name) = 'station.shortname' THEN 'Abbreviated station name for display'
 
         -- Dock table
-        WHEN format('%I.%I', table_name, column_name) = 'dock.dockid' THEN 'Unique identifier for individual docking point'
-        WHEN format('%I.%I', table_name, column_name) = 'dock.stationid' THEN 'Foreign key to Station table'
-        WHEN format('%I.%I', table_name, column_name) = 'dock.docknumber' THEN 'Sequential number of dock within station'
-        WHEN format('%I.%I', table_name, column_name) = 'dock.isoperational' THEN 'Boolean flag indicating if dock is currently operational'
+        WHEN format('%I.%I', cols.table_name, cols.column_name) = 'dock.dockid' THEN 'Unique identifier for individual docking point'
+        WHEN format('%I.%I', cols.table_name, cols.column_name) = 'dock.stationid' THEN 'Foreign key to Station table'
+        WHEN format('%I.%I', cols.table_name, cols.column_name) = 'dock.docknumber' THEN 'Sequential number of dock within station'
+        WHEN format('%I.%I', cols.table_name, cols.column_name) = 'dock.isoperational' THEN 'Boolean flag indicating if dock is currently operational'
 
         -- Rider table
-        WHEN format('%I.%I', table_name, column_name) = 'rider.riderid' THEN 'Unique identifier for rider/user'
-        WHEN format('%I.%I', table_name, column_name) = 'rider.firstname' THEN 'First name of rider'
-        WHEN format('%I.%I', table_name, column_name) = 'rider.lastname' THEN 'Last name of rider'
-        WHEN format('%I.%I', table_name, column_name) = 'rider.email' THEN 'Email address of rider (unique)'
-        WHEN format('%I.%I', table_name, column_name) = 'rider.phone' THEN 'Phone number of rider'
-        WHEN format('%I.%I', table_name, column_name) = 'rider.street' THEN 'Street address of rider'
-        WHEN format('%I.%I', table_name, column_name) = 'rider.apt' THEN 'Apartment/unit number of rider'
-        WHEN format('%I.%I', table_name, column_name) = 'rider.city' THEN 'City of rider residence'
-        WHEN format('%I.%I', table_name, column_name) = 'rider.state' THEN 'State/province of rider residence'
-        WHEN format('%I.%I', table_name, column_name) = 'rider.zip' THEN 'Postal code of rider residence'
+        WHEN format('%I.%I', cols.table_name, cols.column_name) = 'rider.riderid' THEN 'Unique identifier for rider/user'
+        WHEN format('%I.%I', cols.table_name, cols.column_name) = 'rider.firstname' THEN 'First name of rider'
+        WHEN format('%I.%I', cols.table_name, cols.column_name) = 'rider.lastname' THEN 'Last name of rider'
+        WHEN format('%I.%I', cols.table_name, cols.column_name) = 'rider.email' THEN 'Email address of rider (unique)'
+        WHEN format('%I.%I', cols.table_name, cols.column_name) = 'rider.phone' THEN 'Phone number of rider'
+        WHEN format('%I.%I', cols.table_name, cols.column_name) = 'rider.street' THEN 'Street address of rider'
+        WHEN format('%I.%I', cols.table_name, cols.column_name) = 'rider.apt' THEN 'Apartment/unit number of rider'
+        WHEN format('%I.%I', cols.table_name, cols.column_name) = 'rider.city' THEN 'City of rider residence'
+        WHEN format('%I.%I', cols.table_name, cols.column_name) = 'rider.state' THEN 'State/province of rider residence'
+        WHEN format('%I.%I', cols.table_name, cols.column_name) = 'rider.zip' THEN 'Postal code of rider residence'
 
         -- Membership table
-        WHEN format('%I.%I', table_name, column_name) = 'membership.membershipid' THEN 'Unique identifier for membership record'
-        WHEN format('%I.%I', table_name, column_name) = 'membership.riderid' THEN 'Foreign key to Rider table'
-        WHEN format('%I.%I', table_name, column_name) = 'membership.membershiptype' THEN 'Type of membership: DAY, MONTH, or ANNUAL'
-        WHEN format('%I.%I', table_name, column_name) = 'membership.purchasedat' THEN 'Timestamp when membership was purchased'
-        WHEN format('%I.%I', table_name, column_name) = 'membership.expiresat' THEN 'Timestamp when membership expires'
+        WHEN format('%I.%I', cols.table_name, cols.column_name) = 'membership.membershipid' THEN 'Unique identifier for membership record'
+        WHEN format('%I.%I', cols.table_name, cols.column_name) = 'membership.riderid' THEN 'Foreign key to Rider table'
+        WHEN format('%I.%I', cols.table_name, cols.column_name) = 'membership.membershiptype' THEN 'Type of membership: DAY, MONTH, or ANNUAL'
+        WHEN format('%I.%I', cols.table_name, cols.column_name) = 'membership.purchasedat' THEN 'Timestamp when membership was purchased'
+        WHEN format('%I.%I', cols.table_name, cols.column_name) = 'membership.expiresat' THEN 'Timestamp when membership expires'
 
         -- Bicycle table
-        WHEN format('%I.%I', table_name, column_name) = 'bicycle.bicycleid' THEN 'Unique identifier for bicycle'
-        WHEN format('%I.%I', table_name, column_name) = 'bicycle.bicycletype' THEN 'Type of bicycle: ELECTRIC, SMART, CLASSIC, or CARGO'
-        WHEN format('%I.%I', table_name, column_name) = 'bicycle.make' THEN 'Manufacturer/brand of bicycle'
-        WHEN format('%I.%I', table_name, column_name) = 'bicycle.model' THEN 'Model name/number of bicycle'
-        WHEN format('%I.%I', table_name, column_name) = 'bicycle.color' THEN 'Color description of bicycle'
-        WHEN format('%I.%I', table_name, column_name) = 'bicycle.yearacquired' THEN 'Year bicycle was acquired by the program'
+        WHEN format('%I.%I', cols.table_name, cols.column_name) = 'bicycle.bicycleid' THEN 'Unique identifier for bicycle'
+        WHEN format('%I.%I', cols.table_name, cols.column_name) = 'bicycle.bicycletype' THEN 'Type of bicycle: ELECTRIC, SMART, CLASSIC, or CARGO'
+        WHEN format('%I.%I', cols.table_name, cols.column_name) = 'bicycle.make' THEN 'Manufacturer/brand of bicycle'
+        WHEN format('%I.%I', cols.table_name, cols.column_name) = 'bicycle.model' THEN 'Model name/number of bicycle'
+        WHEN format('%I.%I', cols.table_name, cols.column_name) = 'bicycle.color' THEN 'Color description of bicycle'
+        WHEN format('%I.%I', cols.table_name, cols.column_name) = 'bicycle.yearacquired' THEN 'Year bicycle was acquired by the program'
 
         -- Trip table
-        WHEN format('%I.%I', table_name, column_name) = 'trip.tripid' THEN 'Unique identifier for trip record'
-        WHEN format('%I.%I', table_name, column_name) = 'trip.riderid' THEN 'Foreign key to Rider table'
-        WHEN format('%I.%I', table_name, column_name) = 'trip.bicycleid' THEN 'Foreign key to Bicycle table'
-        WHEN format('%I.%I', table_name, column_name) = 'trip.startstationid' THEN 'Foreign key to Station table (rental location)'
-        WHEN format('%I.%I', table_name, column_name) = 'trip.endstationid' THEN 'Foreign key to Station table (return location)'
-        WHEN format('%I.%I', table_name, column_name) = 'trip.starttime' THEN 'Timestamp when trip started'
-        WHEN format('%I.%I', table_name, column_name) = 'trip.endtime' THEN 'Timestamp when trip ended (null if in progress)'
-        WHEN format('%I.%I', table_name, column_name) = 'trip.totaldistance' THEN 'Distance traveled in kilometers (null if not available)'
-        WHEN format('%I.%I', table_name, column_name) = 'trip.totalelapedseconds' THEN 'Duration of trip in seconds (null if not finished)'
-        WHEN format('%I.%I', table_name, column_name) = 'trip.totalcost' THEN 'Total cost of trip in currency units'
-        WHEN format('%I.%I', table_name, column_name) = 'trip.tripfinished' THEN 'Boolean flag indicating if trip is complete'
+        WHEN format('%I.%I', cols.table_name, cols.column_name) = 'trip.tripid' THEN 'Unique identifier for trip record'
+        WHEN format('%I.%I', cols.table_name, cols.column_name) = 'trip.riderid' THEN 'Foreign key to Rider table'
+        WHEN format('%I.%I', cols.table_name, cols.column_name) = 'trip.bicycleid' THEN 'Foreign key to Bicycle table'
+        WHEN format('%I.%I', cols.table_name, cols.column_name) = 'trip.startstationid' THEN 'Foreign key to Station table (rental location)'
+        WHEN format('%I.%I', cols.table_name, cols.column_name) = 'trip.endstationid' THEN 'Foreign key to Station table (return location)'
+        WHEN format('%I.%I', cols.table_name, cols.column_name) = 'trip.starttime' THEN 'Timestamp when trip started'
+        WHEN format('%I.%I', cols.table_name, cols.column_name) = 'trip.endtime' THEN 'Timestamp when trip ended (null if in progress)'
+        WHEN format('%I.%I', cols.table_name, cols.column_name) = 'trip.totaldistance' THEN 'Distance traveled in kilometers (null if not available)'
+        WHEN format('%I.%I', cols.table_name, cols.column_name) = 'trip.totalelapedseconds' THEN 'Duration of trip in seconds (null if not finished)'
+        WHEN format('%I.%I', cols.table_name, cols.column_name) = 'trip.totalcost' THEN 'Total cost of trip in currency units'
+        WHEN format('%I.%I', cols.table_name, cols.column_name) = 'trip.tripfinished' THEN 'Boolean flag indicating if trip is complete'
 
         -- StationStatus table
-        WHEN format('%I.%I', table_name, column_name) = 'stationstatus.stationstatusid' THEN 'Unique identifier for status record'
-        WHEN format('%I.%I', table_name, column_name) = 'stationstatus.stationid' THEN 'Foreign key to Station table'
-        WHEN format('%I.%I', table_name, column_name) = 'stationstatus.reportedat' THEN 'Timestamp when status was recorded'
-        WHEN format('%I.%I', table_name, column_name) = 'stationstatus.bikesavailelectric' THEN 'Count of available electric bikes'
-        WHEN format('%I.%I', table_name, column_name) = 'stationstatus.bikesavailclassic' THEN 'Count of available classic bikes'
-        WHEN format('%I.%I', table_name, column_name) = 'stationstatus.bikesavailsmart' THEN 'Count of available smart bikes'
-        WHEN format('%I.%I', table_name, column_name) = 'stationstatus.bikesavailcargo' THEN 'Count of available cargo bikes'
-        WHEN format('%I.%I', table_name, column_name) = 'stationstatus.bikesavailtotal' THEN 'Total count of available bikes'
-        WHEN format('%I.%I', table_name, column_name) = 'stationstatus.docksavailtotal' THEN 'Total count of available docking points'
-        WHEN format('%I.%I', table_name, column_name) = 'stationstatus.acceptingreturns' THEN 'Boolean indicating if station accepts bike returns'
-        WHEN format('%I.%I', table_name, column_name) = 'stationstatus.isrenting' THEN 'Boolean indicating if station is currently renting bikes'
+        WHEN format('%I.%I', cols.table_name, cols.column_name) = 'stationstatus.stationstatusid' THEN 'Unique identifier for status record'
+        WHEN format('%I.%I', cols.table_name, cols.column_name) = 'stationstatus.stationid' THEN 'Foreign key to Station table'
+        WHEN format('%I.%I', cols.table_name, cols.column_name) = 'stationstatus.reportedat' THEN 'Timestamp when status was recorded'
+        WHEN format('%I.%I', cols.table_name, cols.column_name) = 'stationstatus.bikesavailelectric' THEN 'Count of available electric bikes'
+        WHEN format('%I.%I', cols.table_name, cols.column_name) = 'stationstatus.bikesavailclassic' THEN 'Count of available classic bikes'
+        WHEN format('%I.%I', cols.table_name, cols.column_name) = 'stationstatus.bikesavailsmart' THEN 'Count of available smart bikes'
+        WHEN format('%I.%I', cols.table_name, cols.column_name) = 'stationstatus.bikesavailcargo' THEN 'Count of available cargo bikes'
+        WHEN format('%I.%I', cols.table_name, cols.column_name) = 'stationstatus.bikesavailtotal' THEN 'Total count of available bikes'
+        WHEN format('%I.%I', cols.table_name, cols.column_name) = 'stationstatus.docksavailtotal' THEN 'Total count of available docking points'
+        WHEN format('%I.%I', cols.table_name, cols.column_name) = 'stationstatus.acceptingreturns' THEN 'Boolean indicating if station accepts bike returns'
+        WHEN format('%I.%I', cols.table_name, cols.column_name) = 'stationstatus.isrenting' THEN 'Boolean indicating if station is currently renting bikes'
 
         -- BicycleStatus table
-        WHEN format('%I.%I', table_name, column_name) = 'bicyclestatus.bicyclestatusid' THEN 'Unique identifier for status record'
-        WHEN format('%I.%I', table_name, column_name) = 'bicyclestatus.bicycleid' THEN 'Foreign key to Bicycle table'
-        WHEN format('%I.%I', table_name, column_name) = 'bicyclestatus.recordedat' THEN 'Timestamp when status was recorded'
-        WHEN format('%I.%I', table_name, column_name) = 'bicyclestatus.status' THEN 'Current status: AVAILABLE, IN_USE, or NOT_AVAILABLE'
-        WHEN format('%I.%I', table_name, column_name) = 'bicyclestatus.latitude' THEN 'Geographic latitude of bicycle location'
-        WHEN format('%I.%I', table_name, column_name) = 'bicyclestatus.longitude' THEN 'Geographic longitude of bicycle location'
-        WHEN format('%I.%I', table_name, column_name) = 'bicyclestatus.batterypercent' THEN 'Battery percentage (0-100) for electric/smart bikes'
-        WHEN format('%I.%I', table_name, column_name) = 'bicyclestatus.remainingrange' THEN 'Estimated remaining range in kilometers for electric bikes'
+        WHEN format('%I.%I', cols.table_name, cols.column_name) = 'bicyclestatus.bicyclestatusid' THEN 'Unique identifier for status record'
+        WHEN format('%I.%I', cols.table_name, cols.column_name) = 'bicyclestatus.bicycleid' THEN 'Foreign key to Bicycle table'
+        WHEN format('%I.%I', cols.table_name, cols.column_name) = 'bicyclestatus.recordedat' THEN 'Timestamp when status was recorded'
+        WHEN format('%I.%I', cols.table_name, cols.column_name) = 'bicyclestatus.status' THEN 'Current status: AVAILABLE, IN_USE, or NOT_AVAILABLE'
+        WHEN format('%I.%I', cols.table_name, cols.column_name) = 'bicyclestatus.latitude' THEN 'Geographic latitude of bicycle location'
+        WHEN format('%I.%I', cols.table_name, cols.column_name) = 'bicyclestatus.longitude' THEN 'Geographic longitude of bicycle location'
+        WHEN format('%I.%I', cols.table_name, cols.column_name) = 'bicyclestatus.batterypercent' THEN 'Battery percentage (0-100) for electric/smart bikes'
+        WHEN format('%I.%I', cols.table_name, cols.column_name) = 'bicyclestatus.remainingrange' THEN 'Estimated remaining range in kilometers for electric bikes'
 
         -- Dock Audit Log table
-        WHEN format('%I.%I', table_name, column_name) = 'dock_audit_log.logid' THEN 'Unique identifier for audit log entry'
-        WHEN format('%I.%I', table_name, column_name) = 'dock_audit_log.action_type' THEN 'Type of action performed (INSERT, UPDATE, DELETE)'
-        WHEN format('%I.%I', table_name, column_name) = 'dock_audit_log.action_time' THEN 'Timestamp when audit action occurred'
-        WHEN format('%I.%I', table_name, column_name) = 'dock_audit_log.table_name' THEN 'Name of table that was modified'
+        WHEN format('%I.%I', cols.table_name, cols.column_name) = 'dock_audit_log.logid' THEN 'Unique identifier for audit log entry'
+        WHEN format('%I.%I', cols.table_name, cols.column_name) = 'dock_audit_log.action_type' THEN 'Type of action performed (INSERT, UPDATE, DELETE)'
+        WHEN format('%I.%I', cols.table_name, cols.column_name) = 'dock_audit_log.action_time' THEN 'Timestamp when audit action occurred'
+        WHEN format('%I.%I', cols.table_name, cols.column_name) = 'dock_audit_log.table_name' THEN 'Name of table that was modified'
 
         ELSE 'No description'
     END AS col_desc
-FROM information_schema.columns cols
-WHERE table_schema = 'public' AND table_name NOT LIKE 'v_%'
-ORDER BY table_name, ordinal_position;
+FROM information_schema.columns AS cols
+LEFT JOIN (
+    SELECT table_schema, table_name, column_name, constraint_name FROM information_schema.key_column_usage
+    UNION
+    SELECT table_schema, table_name, column_name, constraint_name FROM information_schema.constraint_column_usage
+) AS combined ON cols.table_schema = combined.table_schema
+    AND cols.table_name = combined.table_name
+    AND cols.column_name = combined.column_name
+LEFT JOIN information_schema.table_constraints AS tc
+    ON combined.table_schema = tc.table_schema
+    AND combined.table_name = tc.table_name
+    AND combined.constraint_name = tc.constraint_name
+WHERE cols.table_schema = 'public' AND cols.table_name NOT LIKE 'v_%'
+GROUP BY cols.table_schema, cols.table_name, cols.column_name, cols.data_type,
+         cols.character_maximum_length, cols.numeric_precision, cols.numeric_scale,
+         cols.is_nullable, cols.column_default
+ORDER BY cols.table_name;
