@@ -96,13 +96,21 @@ SELECT
     cols.table_name AS tab_name,
     cols.column_name AS col_name,
     cols.data_type,
-    cols.character_maximum_length AS char_max_length,
+    cols.character_maximum_length AS char_max_len,
     cols.numeric_precision AS num_precision,
     cols.numeric_scale AS num_scale,
     cols.is_nullable,
     cols.column_default AS col_default_val,
     string_agg(tc.constraint_type, ', ' ORDER BY tc.constraint_type) AS cons_type,
     string_agg(tc.constraint_name, ', ' ORDER BY tc.constraint_type) AS cons_name,
+    CASE
+        WHEN EXISTS (
+            SELECT 1 FROM pg_indexes
+            WHERE pg_indexes.tablename = cols.table_name
+            AND pg_indexes.indexdef LIKE '%' || cols.column_name || '%'
+        ) THEN TRUE
+        ELSE FALSE
+    END AS has_idx,
     CASE
         -- Column descriptions, AI used
         -- Program table
@@ -223,7 +231,7 @@ WHERE cols.table_schema = 'public' AND cols.table_name NOT LIKE 'v_%'
 GROUP BY cols.table_schema, cols.table_name, cols.column_name, cols.data_type,
          cols.character_maximum_length, cols.numeric_precision, cols.numeric_scale,
          cols.is_nullable, cols.column_default
-ORDER BY cols.table_name;
+ORDER BY cols.table_name, cols.column_name;
 
 CREATE OR REPLACE VIEW v_data_dict_program AS
 SELECT * FROM v_data_dict_columns WHERE tab_name = 'program' ORDER BY col_name;
