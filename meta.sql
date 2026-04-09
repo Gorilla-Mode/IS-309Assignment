@@ -8,16 +8,13 @@ CREATE OR REPLACE VIEW v_relation_sizes AS
         pg_size_pretty(pg_relation_size(format('%I.%I', table_schema, table_name), 'fsm')) AS fsm_bytes,
         pg_size_pretty(pg_relation_size(format('%I.%I', table_schema, table_name), 'vm')) AS vm_bytes,
         pg_size_pretty(pg_relation_size(format('%I.%I', table_schema, table_name), 'init')) AS init_bytes,
-        pg_size_pretty(pg_indexes_size(format('%I.%I', table_schema, table_name))) AS index_bytes,
         pg_size_pretty(
-            COALESCE(
-                (SELECT pg_table_size(reltoastrelid)
-                 FROM pg_class
-                 WHERE relname = table_name AND relnamespace = (SELECT oid FROM pg_namespace WHERE nspname = table_schema)),
-                0
-            )
+            pg_total_relation_size(format('%I.%I', table_schema, table_name)) -
+            pg_indexes_size(format('%I.%I', table_schema, table_name)) -
+            pg_relation_size(format('%I.%I', table_schema, table_name), 'main')
         ) AS toast_bytes,
         pg_size_pretty(pg_table_size(format('%I.%I', table_schema, table_name))) AS tot_table_bytes,
+        pg_size_pretty(pg_indexes_size(format('%I.%I', table_schema, table_name))) AS index_bytes,
         pg_size_pretty(pg_total_relation_size(format('%I.%I', table_schema, table_name))) AS tot_relation_bytes
     FROM information_schema.tables
     WHERE table_type = 'BASE TABLE' AND table_schema = 'public'
