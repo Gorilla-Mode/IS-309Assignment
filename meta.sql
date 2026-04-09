@@ -242,8 +242,6 @@ GROUP BY cols.table_schema, cols.table_name, cols.column_name, cols.data_type,
 ORDER BY cols.table_name, cols.column_name
 WITH DATA;
 
-
-
 CREATE UNIQUE INDEX IF NOT EXISTS idx_mv_data_dict_cols_unique
     ON mv_data_dict_columns(tab_schema, tab_name, col_name);
 CREATE INDEX IF NOT EXISTS idx_mv_data_dict_cols_tab_name ON mv_data_dict_columns(tab_name);
@@ -290,10 +288,9 @@ BEGIN
 
         RAISE NOTICE 'Refresh completed at %', NOW();
 
-        PERFORM pg_sleep(36);
+        PERFORM pg_sleep(3600);
     END LOOP;
 END;
 $$;
 
-SELECT pg_sleep(15);
 CALL refresh_materialized_views();
