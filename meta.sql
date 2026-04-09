@@ -183,6 +183,7 @@ SELECT
         WHEN format('%I.%I', cols.table_name, cols.column_name) = 'trip.totalelapedseconds' THEN 'Duration of trip in seconds (null if not finished)'
         WHEN format('%I.%I', cols.table_name, cols.column_name) = 'trip.totalcost' THEN 'Total cost of trip in currency units'
         WHEN format('%I.%I', cols.table_name, cols.column_name) = 'trip.tripfinished' THEN 'Boolean flag indicating if trip is complete'
+        WHEN format('%I.%I', cols.table_name, cols.column_name) = 'trip.totalelapsedseconds' THEN 'Amount of time in seconds since start of trip'
 
         -- StationStatus table
         WHEN format('%I.%I', cols.table_name, cols.column_name) = 'stationstatus.stationstatusid' THEN 'Unique identifier for status record'
