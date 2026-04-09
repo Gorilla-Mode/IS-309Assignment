@@ -1,25 +1,20 @@
 SELECT pg_size_pretty(pg_database_size('bcylce')) as db_size;
 
-CREATE OR REPLACE VIEW v_table_sizes AS
+CREATE OR REPLACE VIEW v_relation_sizes AS
     SELECT
-      table_schema,
-      table_name,
-      pg_size_pretty(total_bytes - heap_bytes - index_bytes) AS toast_bytes,
-      pg_size_pretty(heap_bytes) AS heap_size,
-      pg_size_pretty(index_bytes) AS index_size,
-      pg_size_pretty(total_bytes) AS total_size
-    FROM
-    (
-      SELECT
         table_schema,
         table_name,
-        pg_relation_size(format('%I.%I', table_schema, table_name)) AS heap_bytes,
-        pg_indexes_size(format('%I.%I', table_schema, table_name)) AS index_bytes,
-        pg_total_relation_size(format('%I.%I', table_schema, table_name)) AS total_bytes
-      FROM information_schema.tables
-      WHERE table_type = 'BASE TABLE' AND table_schema = 'public'
-    ) AS relation_size
-    ORDER BY total_bytes DESC;
+        pg_size_pretty(pg_relation_size(format('%I.%I', table_schema, table_name))) AS heap_bytes,
+        pg_size_pretty(pg_indexes_size(format('%I.%I', table_schema, table_name))) AS index_bytes,
+        pg_size_pretty(pg_relation_size(format('%I.%I', table_schema, table_name), 'main')) AS main_bytes,
+        pg_size_pretty(pg_relation_size(format('%I.%I', table_schema, table_name), 'fsm')) AS fsm_bytes,
+        pg_size_pretty(pg_relation_size(format('%I.%I', table_schema, table_name), 'vm')) AS vm_bytes,
+        pg_size_pretty(pg_relation_size(format('%I.%I', table_schema, table_name), 'init')) AS init_bytes,
+        pg_size_pretty(pg_table_size(format('%I.%I', table_schema, table_name))) AS tot_table_bytes,
+        pg_size_pretty(pg_total_relation_size(format('%I.%I', table_schema, table_name))) AS tot_relation_bytes
+    FROM information_schema.tables
+    WHERE table_type = 'BASE TABLE' AND table_schema = 'public'
+    ORDER BY tot_relation_bytes DESC;
 
 CREATE EXTENSION IF NOT EXISTS pageinspect;
 
