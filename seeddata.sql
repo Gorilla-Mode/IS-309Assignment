@@ -491,3 +491,33 @@ start transaction;
 
     UPDATE trip SET totalelapsedseconds = EXTRACT(EPOCH FROM (endtime - starttime)) where TRUE; --still DGAF do it on all rows
 commit;
+
+/* If you want more data for the trip table
+ INSERT INTO trip (
+    riderid, bicycleid, startstationid, endstationid,
+    starttime, endtime, totaldistance, totalelapsedseconds, totalcost
+)
+SELECT
+    r.riderid,
+    b.bicycleid,
+    s1.stationid AS startstationid,
+    s2.stationid AS endstationid,
+    now() - (random() * interval '10 hours') AS starttime,
+    now() - (random() * interval '5 hours') AS endtime,
+    (random() * 5000)::int AS totaldistance,
+    0 AS totalelapsedseconds,
+    (random() * 2000)::int AS totalcost
+FROM generate_series(1, 1000) g
+         CROSS JOIN LATERAL (
+    SELECT riderid FROM rider ORDER BY random() LIMIT 1
+    ) r
+         CROSS JOIN LATERAL (
+    SELECT bicycleid FROM bicycle ORDER BY random() LIMIT 1
+    ) b
+         CROSS JOIN LATERAL (
+    SELECT stationid FROM station ORDER BY random() LIMIT 1
+    ) s1
+         CROSS JOIN LATERAL (
+    SELECT stationid FROM station ORDER BY random() LIMIT 1
+    ) s2;
+ */

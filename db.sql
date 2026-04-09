@@ -78,6 +78,18 @@ CREATE TABLE IF NOT EXISTS Trip (
                       TripFinished        BOOLEAN NOT NULL DEFAULT TRUE
 );
 
+create index idx_trip_riderid
+    on trip (riderid);
+
+create index idx_trip_bicycleid
+    on trip (bicycleid);
+
+create index idx_trip_startstationid
+    on trip (startstationid);
+
+create index idx_trip_endstationid
+    on trip (endstationid);
+
 CREATE TABLE IF NOT EXISTS StationStatus (
                                StationStatusID     INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
                                StationID           INT NOT NULL REFERENCES Station(StationID) ON DELETE CASCADE,
