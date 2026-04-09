@@ -1,57 +1,59 @@
 SELECT pg_size_pretty(pg_database_size('bcylce')) as db_size;
 
-SELECT
-  table_schema,
-  table_name,
-  pg_size_pretty(total_bytes - heap_bytes - index_bytes) AS toast_bytes,
-  pg_size_pretty(heap_bytes) AS heap_size,
-  pg_size_pretty(index_bytes) AS index_size,
-  pg_size_pretty(total_bytes) AS total_size
-FROM
-(
-  SELECT
-    table_schema,
-    table_name,
-    pg_relation_size(format('%I.%I', table_schema, table_name)) AS heap_bytes,
-    pg_indexes_size(format('%I.%I', table_schema, table_name)) AS index_bytes,
-    pg_total_relation_size(format('%I.%I', table_schema, table_name)) AS total_bytes
-  FROM information_schema.tables
-  WHERE table_type = 'BASE TABLE' AND table_schema = 'public'
-) AS relation_size
-ORDER BY total_bytes DESC;
+CREATE OR REPLACE VIEW v_table_sizes AS
+    SELECT
+      table_schema,
+      table_name,
+      pg_size_pretty(total_bytes - heap_bytes - index_bytes) AS toast_bytes,
+      pg_size_pretty(heap_bytes) AS heap_size,
+      pg_size_pretty(index_bytes) AS index_size,
+      pg_size_pretty(total_bytes) AS total_size
+    FROM
+    (
+      SELECT
+        table_schema,
+        table_name,
+        pg_relation_size(format('%I.%I', table_schema, table_name)) AS heap_bytes,
+        pg_indexes_size(format('%I.%I', table_schema, table_name)) AS index_bytes,
+        pg_total_relation_size(format('%I.%I', table_schema, table_name)) AS total_bytes
+      FROM information_schema.tables
+      WHERE table_type = 'BASE TABLE' AND table_schema = 'public'
+    ) AS relation_size
+    ORDER BY total_bytes DESC;
 
 CREATE EXTENSION IF NOT EXISTS pageinspect;
 
-SELECT
-    stat.relname AS table_name,
-    pc.relpages AS full_pages,
-    CASE
-        WHEN pc.relpages > 0 THEN
-            (SELECT count(*) FROM heap_page_items(get_raw_page(stat.relname, 0)))
-    END AS real_max_tuples_in_page,
-    CASE
-        WHEN pc.relpages > 0 THEN NULL
-        WHEN pc.relpages = 0 AND stat.n_live_tup > 0 THEN
-            (SELECT FLOOR((current_setting('block_size')::int - 32) / (AVG(lp_len) + 8))
-                FROM heap_page_items(get_raw_page(stat.relname, 0)))
-    END AS est_max_tuples_in_page,
-    CASE
-        WHEN stat.n_live_tup = 0 THEN NULL
-        WHEN pc.relpages = 0 THEN
-            stat.n_live_tup
-        WHEN pc.relpages > 0 THEN
-            stat.n_live_tup / pc.relpages
-    END AS tuples_in_allocated_page,
-    (pc.relpages > 0) AS has_full_page
-FROM pg_stat_user_tables stat
-LEFT JOIN pg_class pc ON stat.relname = pc.relname
-    AND pc.relnamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'public')
-WHERE stat.schemaname = 'public'
-ORDER BY stat.relname;
+CREATE OR REPLACE VIEW v_page_usage AS
+    SELECT
+        stat.relname AS table_name,
+        pc.relpages AS full_pages,
+        CASE
+            WHEN pc.relpages > 0 THEN
+                (SELECT count(*) FROM heap_page_items(get_raw_page(stat.relname, 0)))
+        END AS real_max_tuples_in_page,
+        CASE
+            WHEN pc.relpages > 0 THEN NULL
+            WHEN pc.relpages = 0 AND stat.n_live_tup > 0 THEN
+                (SELECT FLOOR((current_setting('block_size')::int - 32) / (AVG(lp_len) + 8))
+                    FROM heap_page_items(get_raw_page(stat.relname, 0)))
+        END AS est_max_tuples_in_page,
+        CASE
+            WHEN stat.n_live_tup = 0 THEN NULL
+            WHEN pc.relpages = 0 THEN
+                stat.n_live_tup
+            WHEN pc.relpages > 0 THEN
+                stat.n_live_tup / pc.relpages
+        END AS tuples_in_allocated_page,
+        (pc.relpages > 0) AS has_full_page
+    FROM pg_stat_user_tables stat
+    LEFT JOIN pg_class pc ON stat.relname = pc.relname
+        AND pc.relnamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'public')
+    WHERE stat.schemaname = 'public'
+    ORDER BY stat.relname;
 
 DROP VIEW IF EXISTS v_data_dict_tables;
 
-CREATE OR REPLACE VIEW v_data_dict_tables AS
+CREATE MATERIALIZED VIEW IF NOT EXISTS mv_data_dict_tables AS
     SELECT
         schemaname AS tab_schema,
         relname AS tab_name,
@@ -88,9 +90,14 @@ CREATE OR REPLACE VIEW v_data_dict_tables AS
         pg_size_pretty(pg_total_relation_size(format('%I.%I', schemaname, relname))) AS tab_size
 FROM pg_stat_user_tables
 WHERE schemaname = 'public'
-ORDER BY relname;
+ORDER BY relname
+WITH DATA;
 
-CREATE OR REPLACE VIEW v_data_dict_columns AS
+CREATE UNIQUE INDEX IF NOT EXISTS idx_mv_data_dict_tab_unique
+    ON mv_data_dict_tables(tab_schema, tab_name);
+CREATE INDEX IF NOT EXISTS idx_mv_data_dict_tab_name ON mv_data_dict_tables(tab_name);
+
+CREATE MATERIALIZED VIEW IF NOT EXISTS mv_data_dict_columns AS
 SELECT
     cols.table_schema AS tab_schema,
     cols.table_name AS tab_name,
@@ -228,38 +235,65 @@ LEFT JOIN information_schema.table_constraints AS tc
     ON combined.table_schema = tc.table_schema
     AND combined.table_name = tc.table_name
     AND combined.constraint_name = tc.constraint_name
-WHERE cols.table_schema = 'public' AND cols.table_name NOT LIKE 'v_%'
+WHERE cols.table_schema = 'public' AND cols.table_name NOT LIKE '%v_%'
 GROUP BY cols.table_schema, cols.table_name, cols.column_name, cols.data_type,
          cols.character_maximum_length, cols.numeric_precision, cols.numeric_scale,
          cols.is_nullable, cols.column_default
-ORDER BY cols.table_name, cols.column_name;
+ORDER BY cols.table_name, cols.column_name
+WITH DATA;
+
+
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_mv_data_dict_cols_unique
+    ON mv_data_dict_columns(tab_schema, tab_name, col_name);
+CREATE INDEX IF NOT EXISTS idx_mv_data_dict_cols_tab_name ON mv_data_dict_columns(tab_name);
+CREATE INDEX IF NOT EXISTS idx_mv_data_dict_cols_col_name ON mv_data_dict_columns(col_name);
 
 CREATE OR REPLACE VIEW v_data_dict_program AS
-SELECT * FROM v_data_dict_columns WHERE tab_name = 'program' ORDER BY col_name;
+SELECT * FROM mv_data_dict_columns WHERE tab_name = 'program' ORDER BY col_name;
 
 CREATE OR REPLACE VIEW v_data_dict_station AS
-SELECT * FROM v_data_dict_columns WHERE tab_name = 'station' ORDER BY col_name;
+SELECT * FROM mv_data_dict_columns WHERE tab_name = 'station' ORDER BY col_name;
 
 CREATE OR REPLACE VIEW v_data_dict_dock AS
-SELECT * FROM v_data_dict_columns WHERE tab_name = 'dock' ORDER BY col_name;
+SELECT * FROM mv_data_dict_columns WHERE tab_name = 'dock' ORDER BY col_name;
 
 CREATE OR REPLACE VIEW v_data_dict_rider AS
-SELECT * FROM v_data_dict_columns WHERE tab_name = 'rider' ORDER BY col_name;
+SELECT * FROM mv_data_dict_columns WHERE tab_name = 'rider' ORDER BY col_name;
 
 CREATE OR REPLACE VIEW v_data_dict_membership AS
-SELECT * FROM v_data_dict_columns WHERE tab_name = 'membership' ORDER BY col_name;
+SELECT * FROM mv_data_dict_columns WHERE tab_name = 'membership' ORDER BY col_name;
 
 CREATE OR REPLACE VIEW v_data_dict_bicycle AS
-SELECT * FROM v_data_dict_columns WHERE tab_name = 'bicycle' ORDER BY col_name;
+SELECT * FROM mv_data_dict_columns WHERE tab_name = 'bicycle' ORDER BY col_name;
 
 CREATE OR REPLACE VIEW v_data_dict_trip AS
-SELECT * FROM v_data_dict_columns WHERE tab_name = 'trip' ORDER BY col_name;
+SELECT * FROM mv_data_dict_columns WHERE tab_name = 'trip' ORDER BY col_name;
 
 CREATE OR REPLACE VIEW v_data_dict_stationstatus AS
-SELECT * FROM v_data_dict_columns WHERE tab_name = 'stationstatus' ORDER BY col_name;
+SELECT * FROM mv_data_dict_columns WHERE tab_name = 'stationstatus' ORDER BY col_name;
 
 CREATE OR REPLACE VIEW v_data_dict_bicyclestatus AS
-SELECT * FROM v_data_dict_columns WHERE tab_name = 'bicyclestatus' ORDER BY col_name;
+SELECT * FROM mv_data_dict_columns WHERE tab_name = 'bicyclestatus' ORDER BY col_name;
 
 CREATE OR REPLACE VIEW v_data_dict_dock_audit_log AS
-SELECT * FROM v_data_dict_columns WHERE tab_name = 'dock_audit_log' ORDER BY col_name;
+SELECT * FROM mv_data_dict_columns WHERE tab_name = 'dock_audit_log' ORDER BY col_name;
+
+CREATE OR REPLACE PROCEDURE refresh_materialized_views()
+    LANGUAGE plpgsql
+AS $$
+BEGIN
+    LOOP
+        RAISE NOTICE 'Refreshing materialized views at %', NOW();
+        REFRESH MATERIALIZED VIEW CONCURRENTLY mv_data_dict_columns;
+        REFRESH MATERIALIZED VIEW CONCURRENTLY mv_data_dict_tables;
+
+        RAISE NOTICE 'Refresh completed at %', NOW();
+
+        PERFORM pg_sleep(36);
+    END LOOP;
+END;
+$$;
+
+SELECT pg_sleep(15);
+CALL refresh_materialized_views();
