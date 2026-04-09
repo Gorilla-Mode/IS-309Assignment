@@ -5,9 +5,9 @@ CREATE TABLE IF NOT EXISTS Program (
                          Name        VARCHAR(100) NOT NULL,
                          Location    VARCHAR(100),
                          Phone       VARCHAR(30),
-                         Email       VARCHAR(255),
+                         Email       VARCHAR(100),
                          Timezone    VARCHAR(64),
-                         URL         VARCHAR(255),
+                         URL         VARCHAR(100),
                          ShortName   VARCHAR(50)
 );
 
@@ -17,9 +17,9 @@ CREATE TABLE IF NOT EXISTS Station (
                          ProgramID     INT NOT NULL REFERENCES Program(ProgramID),
                          Address       VARCHAR(120) NOT NULL,
                          Name          VARCHAR(120) NOT NULL,
-                         Latitude      NUMERIC(9,6) NOT NULL,
-                         Longitude     NUMERIC(9,6) NOT NULL,
-                         Capacity      INT NOT NULL CHECK (Capacity >= 1),
+                         Latitude      DOUBLE PRECISION NOT NULL,
+                         Longitude     DOUBLE PRECISION NOT NULL,
+                         Capacity      SMALLINT NOT NULL CHECK (Capacity >= 1),
                          PostalCode    VARCHAR(20),
                          ContactPhone  VARCHAR(30),
                          ShortName     VARCHAR(50)
@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS Rider (
                        RiderID    INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
                        FirstName  VARCHAR(50) NOT NULL,
                        LastName   VARCHAR(50) NOT NULL,
-                       Email      VARCHAR(255) NOT NULL UNIQUE,
+                       Email      VARCHAR(100) NOT NULL UNIQUE,
                        Phone      VARCHAR(30),
                        Street     VARCHAR(120),
                        Apt        VARCHAR(20),
@@ -61,7 +61,7 @@ CREATE TABLE IF NOT EXISTS Bicycle (
                          Make         VARCHAR(50),
                          Model        VARCHAR(50),
                          Color        VARCHAR(30),
-                         YearAcquired INT CHECK (YearAcquired IS NULL OR (YearAcquired >= 1900 AND YearAcquired <= 2100))
+                         YearAcquired SMALLINT CHECK (YearAcquired IS NULL OR (YearAcquired >= 1900 AND YearAcquired <= 2100))
 );
 
 CREATE TABLE IF NOT EXISTS Trip (
@@ -71,7 +71,7 @@ CREATE TABLE IF NOT EXISTS Trip (
                       StartStationID      INT NOT NULL REFERENCES Station(StationID),
                       EndStationID        INT NOT NULL REFERENCES Station(StationID),
                       StartTime           TIMESTAMP NOT NULL,
-                      EndTime             TIMESTAMPTZ,
+                      EndTime             TIMESTAMP,
                       TotalDistance       NUMERIC(8,2) CHECK (TotalDistance IS NULL OR TotalDistance >= 0),
                       TotalElapsedSeconds INT CHECK (TotalElapsedSeconds IS NULL OR TotalElapsedSeconds >= 0),
                       TotalCost           NUMERIC(10,2) CHECK (TotalCost IS NULL OR TotalCost >= 0),
@@ -82,12 +82,12 @@ CREATE TABLE IF NOT EXISTS StationStatus (
                                StationStatusID     INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
                                StationID           INT NOT NULL REFERENCES Station(StationID) ON DELETE CASCADE,
                                ReportedAt          TIMESTAMP NOT NULL,
-                               BikesAvailElectric  INT NOT NULL DEFAULT 0 CHECK (BikesAvailElectric >= 0),
-                               BikesAvailClassic   INT NOT NULL DEFAULT 0 CHECK (BikesAvailClassic >= 0),
-                               BikesAvailSmart     INT NOT NULL DEFAULT 0 CHECK (BikesAvailSmart >= 0),
-                               BikesAvailCargo     INT NOT NULL DEFAULT 0 CHECK (BikesAvailCargo >= 0),
-                               BikesAvailTotal     INT NOT NULL DEFAULT 0 CHECK (BikesAvailTotal >= 0),
-                               DocksAvailTotal     INT NOT NULL DEFAULT 0 CHECK (DocksAvailTotal >= 0),
+                               BikesAvailElectric  SMALLINT NOT NULL DEFAULT 0 CHECK (BikesAvailElectric >= 0),
+                               BikesAvailClassic   SMALLINT NOT NULL DEFAULT 0 CHECK (BikesAvailClassic >= 0),
+                               BikesAvailSmart     SMALLINT NOT NULL DEFAULT 0 CHECK (BikesAvailSmart >= 0),
+                               BikesAvailCargo     SMALLINT NOT NULL DEFAULT 0 CHECK (BikesAvailCargo >= 0),
+                               BikesAvailTotal     SMALLINT NOT NULL DEFAULT 0 CHECK (BikesAvailTotal >= 0),
+                               DocksAvailTotal     SMALLINT NOT NULL DEFAULT 0 CHECK (DocksAvailTotal >= 0),
                                AcceptingReturns    BOOLEAN NOT NULL DEFAULT TRUE,
                                IsRenting           BOOLEAN NOT NULL DEFAULT TRUE
 );
@@ -97,8 +97,8 @@ CREATE TABLE IF NOT EXISTS BicycleStatus (
                                BicycleID        INT NOT NULL REFERENCES Bicycle(BicycleID) ON DELETE CASCADE,
                                RecordedAt       TIMESTAMP NOT NULL,
                                Status           VARCHAR(15) NOT NULL CHECK (Status IN ('AVAILABLE','IN_USE','NOT_AVAILABLE')),
-                               Latitude         NUMERIC(9,6),
-                               Longitude        NUMERIC(9,6),
-                               BatteryPercent   INT CHECK (BatteryPercent IS NULL OR (BatteryPercent >= 0 AND BatteryPercent <= 100)),
+                               Latitude      DOUBLE PRECISION,
+                               Longitude     DOUBLE PRECISION,
+                               BatteryPercent   SMALLINT CHECK (BatteryPercent IS NULL OR (BatteryPercent >= 0 AND BatteryPercent <= 100)),
                                RemainingRange   NUMERIC(6,2) CHECK (RemainingRange IS NULL OR RemainingRange >= 0)
 );
