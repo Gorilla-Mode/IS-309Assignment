@@ -41,7 +41,7 @@ CREATE OR REPLACE VIEW v_page_usage AS
             WHEN pc.relpages = 0 THEN
                 stat.n_live_tup
             WHEN pc.relpages > 0 THEN
-                stat.n_live_tup / pc.relpages
+                stat.n_live_tup % (SELECT count(*) FROM heap_page_items(get_raw_page(stat.relname, 0)))
         END AS tuples_in_allocated_page,
         (pc.relpages > 0) AS has_full_page
     FROM pg_stat_user_tables stat
