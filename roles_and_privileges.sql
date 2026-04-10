@@ -207,18 +207,6 @@ GRANT SELECT ON station TO auditor_role;
 GRANT SELECT ON stationstatus TO auditor_role;
 GRANT SELECT ON trip TO auditor_role;
 
-
-
--- =========================================================
--- 3E. TABLE PRIVILEGES: INSIGHT ROLE
--- Audit and control role with read-only access to log and
--- selected operational data.
--- Access to dock_audit_log is granted only if the table
--- exists, since it is created in sp.sql.
--- =========================================================
-
-GRANT SELECT ON ALL TABLES IN SCHEMA public TO insight_role;
-
 -- =========================================================
 -- 4. GRANT EXECUTE PRIVILEGES
 -- The station manager may execute the dock creation procedure
