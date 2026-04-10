@@ -37,7 +37,10 @@ $$;
 CREATE OR REPLACE VIEW v_page_usage_table AS
     SELECT
         stat.relname AS table_name,
-        pc.relpages AS allocated_pages,
+        CASE
+            WHEN pc.relpages > 0 THEN pc.relpages + 1
+            ELSE 1::double precision
+        END AS allocated_pages,
         stat.n_live_tup AS tot_tups,
         CASE
             WHEN pc.relpages > 0 THEN
@@ -65,8 +68,8 @@ CREATE OR REPLACE VIEW v_page_usage_materialized AS
     SELECT
         pc.relname AS table_name,
         CASE
-            WHEN s.page_capacity > 0 THEN FLOOR(s.exact_tuples::numeric / s.page_capacity)::int
-            ELSE 0
+            WHEN s.page_capacity > 0 THEN FLOOR(s.exact_tuples::numeric / s.page_capacity)::int + 1
+            ELSE 1
         END AS allocated_pages,
         s.exact_tuples AS tot_tups,
         s.page_capacity AS real_max_tups_in_page,
