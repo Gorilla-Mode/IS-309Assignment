@@ -41,6 +41,7 @@ $scriptAbsolutePath = Split-Path -Parent $MyInvocation.MyCommand.Definition
 $sqlAbsolutePath = $scriptAbsolutePath+"/db.sql"
 $SqlDataAbsolutePath = $scriptAbsolutePath+"/seeddata.sql"
 $SqlProcedureAbsolutePath = $scriptAbsolutePath+"/sp.sql"
+$SqlMetaAbsolutePath = $scriptAbsolutePath+"/meta.sql"
 $envAbsolutePath = $scriptAbsolutePath+"/.env"
 
 #tests
@@ -72,8 +73,11 @@ if(!$ni)
         Write-Host "Injecting seeddata.sql from @ $SqlDataAbsolutePath to container..."
         docker cp $SqlDataAbsolutePath is309_db:/seeddata.sql
 
-        Write-Host "Injecting seeddata.sql from @ $SqlProcedureAbsolutePath to container..."
+        Write-Host "Injecting sp.sql from @ $SqlProcedureAbsolutePath to container..."
         docker cp $SqlProcedureAbsolutePath is309_db:/sp.sql
+
+        Write-Host "Injecting meta.sql from @ $SqlProcedureAbsolutePath to container..."
+        docker cp $SqlMetaAbsolutePath is309_db:/meta.sql
     }
     catch
     {
@@ -142,6 +146,10 @@ if(!$ne)
         Write-Host "Executing stored procedures sql script on $($envHash['POSTGRES_DB'])..."
         docker exec -i is309_db sh -c "PGPASSWORD='$($envHash['POSTGRES_PASSWORD'])' psql -U $($envHash['POSTGRES_USER']) -d $($envHash['POSTGRES_DB']) -f /sp.sql"
         Write-Host "    Sql script executed, procedures created"
+
+        Write-Host "Executing meta data sql script on $($envHash['POSTGRES_DB'])..."
+        docker exec -i is309_db sh -c "PGPASSWORD='$($envHash['POSTGRES_PASSWORD'])' psql -U $($envHash['POSTGRES_USER']) -d $($envHash['POSTGRES_DB']) -f /meta.sql"
+        Write-Host "    Sql script executed, meta data created"
     }
     catch
     {
