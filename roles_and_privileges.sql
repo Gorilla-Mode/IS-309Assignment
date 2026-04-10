@@ -298,3 +298,14 @@ GRANT maintenance_role TO ola_maintenance;
 GRANT customer_support_role TO emma_support;
 GRANT station_manager_role TO lars_station_manager;
 GRANT auditor_role TO nina_auditor;
+
+-- =========================================================
+-- 7. UNIVERSAL PRIVILEGE
+-- USAGE on the public schema is granted to PUBLIC so that
+-- all current and future database users can navigate the
+-- schema and benefit from any role-specific privileges
+-- granted to them. Without this, no object-level grant
+-- has any effect.
+-- =========================================================
+
+GRANT USAGE ON SCHEMA public TO PUBLIC;
