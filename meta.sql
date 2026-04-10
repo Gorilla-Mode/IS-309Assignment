@@ -22,35 +22,80 @@ CREATE OR REPLACE VIEW v_relation_sizes AS
 
 CREATE EXTENSION IF NOT EXISTS pageinspect;
 
-CREATE OR REPLACE VIEW v_page_usage AS
+CREATE OR REPLACE FUNCTION get_exact_row_count(p_schema text, p_rel text)
+RETURNS bigint
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    v_count bigint;
+BEGIN
+    EXECUTE format('SELECT count(*) FROM %I.%I', p_schema, p_rel) INTO v_count;
+    RETURN v_count;
+END;
+$$;
+
+CREATE OR REPLACE VIEW v_page_usage_table AS
     SELECT
         stat.relname AS table_name,
-        pc.relpages AS full_pages,
+        pc.relpages AS allocated_pages,
+        stat.n_live_tup AS tot_tups,
         CASE
             WHEN pc.relpages > 0 THEN
                 (SELECT count(*) FROM heap_page_items(get_raw_page(stat.relname, 0)))
-        END AS real_max_tuples_in_page,
+        END AS real_max_tups_in_page,
         CASE
             WHEN pc.relpages > 0 THEN NULL
             WHEN pc.relpages = 0 AND stat.n_live_tup > 0 THEN
                 (SELECT FLOOR((current_setting('block_size')::int - 32) / (AVG(lp_len) + 8))
                     FROM heap_page_items(get_raw_page(stat.relname, 0)))
-        END AS est_max_tuples_in_page,
+        END AS est_max_tups_in_page,
         CASE
             WHEN stat.n_live_tup = 0 THEN NULL
-            WHEN pc.relpages = 0 THEN
-                stat.n_live_tup
+            WHEN pc.relpages = 0 THEN stat.n_live_tup
             WHEN pc.relpages > 0 THEN
                 stat.n_live_tup % (SELECT count(*) FROM heap_page_items(get_raw_page(stat.relname, 0)))
-        END AS tuples_in_allocated_page,
-        (pc.relpages > 0) AS has_full_page
+        END AS tups_in_allocated_page
     FROM pg_stat_user_tables stat
     LEFT JOIN pg_class pc ON stat.relname = pc.relname
         AND pc.relnamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'public')
-    WHERE stat.schemaname = 'public'
+    WHERE stat.schemaname = 'public' AND pc.relkind = 'r'
     ORDER BY stat.relname;
 
-DROP VIEW IF EXISTS v_data_dict_tables;
+CREATE OR REPLACE VIEW v_page_usage_materialized AS
+    SELECT
+        pc.relname AS table_name,
+        CASE
+            WHEN s.page_capacity > 0 THEN FLOOR(s.exact_tuples::numeric / s.page_capacity)::int
+            ELSE 0
+        END AS allocated_pages,
+        s.exact_tuples AS tot_tups,
+        s.page_capacity AS real_max_tups_in_page,
+        NULL::numeric AS est_max_tups_in_page,
+        CASE
+            WHEN s.exact_tuples = 0 THEN NULL
+            WHEN s.allocated_pages = 0 THEN s.exact_tuples
+            WHEN s.page_capacity > 0 THEN s.exact_tuples % s.page_capacity
+        END AS tups_in_allocated_page
+    FROM pg_class pc
+    INNER JOIN pg_namespace ns ON pc.relnamespace = ns.oid
+    CROSS JOIN LATERAL (
+        SELECT
+            get_exact_row_count(ns.nspname, pc.relname) AS exact_tuples,
+            (pg_relation_size(format('%I.%I', ns.nspname, pc.relname), 'main') /
+                current_setting('block_size')::int)::int AS allocated_pages,
+            CASE
+                WHEN pg_relation_size(format('%I.%I', ns.nspname, pc.relname), 'main') > 0 THEN
+                    (SELECT count(*) FROM heap_page_items(get_raw_page(format('%I.%I', ns.nspname, pc.relname), 0)))
+            END AS page_capacity
+    ) AS s
+    WHERE ns.nspname = 'public' AND pc.relkind = 'm'
+    ORDER BY pc.relname;
+
+CREATE OR REPLACE VIEW v_page_usage AS
+    SELECT * FROM v_page_usage_table
+    UNION ALL
+    SELECT * FROM v_page_usage_materialized
+    ORDER BY table_name;
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS mv_data_dict_tables AS
     SELECT
@@ -283,7 +328,9 @@ BEGIN
     LOOP
         RAISE NOTICE 'Refreshing materialized views at %', NOW();
         REFRESH MATERIALIZED VIEW CONCURRENTLY mv_data_dict_columns;
+        ANALYZE mv_data_dict_columns;
         REFRESH MATERIALIZED VIEW CONCURRENTLY mv_data_dict_tables;
+        ANALYZE mv_data_dict_tables;
 
         RAISE NOTICE 'Refresh completed at %', NOW();
 
