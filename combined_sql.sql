@@ -129,13 +129,17 @@ CREATE TABLE IF NOT EXISTS BicycleStatus (
                                RemainingRange   NUMERIC(6,2) CHECK (RemainingRange IS NULL OR RemainingRange >= 0)
 );
 
-
-
 -- =========================================================
 -- SECTION 2: STORED PROCEDURES AND FUNCTIONS
 -- Includes triggers and procedural logic
 -- =========================================================
 
+/* =====================================================
+   FUNCTION
+   VALIDATE_RECORD_EXISTS_FN
+   Purpose:
+   Verify that a record exists.
+   ===================================================== */
 CREATE OR REPLACE FUNCTION VALIDATE_RECORD_EXISTS_FN(
     p_table_name TEXT,
     p_column_name TEXT,
@@ -200,6 +204,13 @@ BEGIN
 END;
 $$;
 
+/* =====================================================
+   STORED PROCEDURE
+   PURCHASE_MEMBERSHIP_SP
+   Purpose:
+   Purchase a membership for a rider.
+   ===================================================== */
+
 CREATE OR REPLACE PROCEDURE PURCHASE_MEMBERSHIP_SP(
     IN p_rider_id INT,
     IN p_membership_type VARCHAR(10),
@@ -256,6 +267,14 @@ BEGIN
 END;
 $$;
 
+/* =====================================================
+   STORED PROCEDURE
+   CREATE_STATION_SP
+   Purpose:
+   Create a new station.
+   ===================================================== */
+
+
 CREATE OR REPLACE PROCEDURE CREATE_STATION_SP(
     IN p_station_code VARCHAR(80),
     IN p_program_id INT,
@@ -290,6 +309,14 @@ BEGIN
 END;
 $$;
 
+/* =====================================================
+   STORED PROCEDURE
+   CREATE_BICYCLE_SP
+   Purpose:
+   Create a new bicycle.
+   ===================================================== */
+
+
 CREATE OR REPLACE PROCEDURE CREATE_BICYCLE_SP(
     IN p_bicycle_type VARCHAR(10),
     IN p_make VARCHAR(50),
@@ -317,6 +344,13 @@ BEGIN
     RAISE NOTICE 'Bicycle created successfully. BicycleID: %', p_bicycle_id;
 END;
 $$;
+
+/* =====================================================
+   STORED PROCEDURE
+   CREATE_ACCOUNT_SP
+   Purpose:
+   Create a new account.
+   ===================================================== */
 
 CREATE OR REPLACE PROCEDURE CREATE_ACCOUNT_SP(
     IN p_first_name VARCHAR(50),
@@ -348,8 +382,6 @@ BEGIN
         (p_first_name, p_last_name, p_email, p_phone, p_street, p_apt,
          p_city, p_state, p_zip)
     RETURNING riderid INTO p_account_id;
-
-    RAISE NOTICE 'Created the account, riderId is : %', p_account_id;
 END;
 $$;
 
@@ -374,7 +406,7 @@ AS $$
         bicycle_type TEXT;
         p_trip_id INT;
 -- region START_TRIP_SP validations
-       
+
 /* Checks if the station exists, not just a random station */
 BEGIN
     IF (NOT VALIDATE_RECORD_EXISTS_FN('station', 'stationid', p_start_station_id)) THEN
@@ -382,7 +414,7 @@ BEGIN
 END IF;
 
     /* Checks if the dock exists, not just a random dock */
-    
+
         IF NOT EXISTS (
             SELECT 1
             FROM dock
@@ -418,8 +450,8 @@ END IF;
 
 /* Checks if the stationstatus is renting bicycles */
 
-    IF NOT (SELECT isrenting 
-       FROM stationstatus 
+    IF NOT (SELECT isrenting
+       FROM stationstatus
        WHERE stationstatusid = p_start_station_id) THEN
        RAISE EXCEPTION 'Station with StationID % is not renting bicycles.', p_start_station_id;
     END IF;
@@ -465,7 +497,7 @@ END IF;
             RAISE EXCEPTION 'Unsupported bicycle type: %', bicycle_type;
         END CASE;
 -- endregion
-    
+
     /* Removes one of the available bikes from stationstatus since you will be using it (Based on the category of bike you chose) */
     BEGIN
         IF bicycle_type = 'CLASSIC' THEN
@@ -505,12 +537,12 @@ VALUES (p_rider_id,
         RETURNING tripid INTO p_trip_id;
 
     RAISE NOTICE 'Trip started successfully. TripID: %', p_trip_id;
-    
+
         -- Create a new bicyclestatus record to mark the bike as IN_USE
         INSERT INTO bicyclestatus (bicycleid, recordedat, status)
         VALUES (p_bicycle_id, CURRENT_TIMESTAMP, 'IN_USE');
-    
-END; 
+
+END;
 $$;
 
 /* =====================================================
@@ -649,11 +681,7 @@ CREATE OR REPLACE TRIGGER trg_check_dock_capacity
     FOR EACH ROW
 EXECUTE FUNCTION check_dock_capacity_fn();
 
-/* =====================================================
-   STATEMENT-LEVEL TRIGGER
-   Logs INSERT, UPDATE and DELETE operations performed
-   on the Dock table.
-   ===================================================== */
+
 CREATE TABLE IF NOT EXISTS public.dock_audit_log (
                                                      logid INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
                                                      action_type VARCHAR(10) NOT NULL,
@@ -679,6 +707,33 @@ CREATE OR REPLACE TRIGGER trg_log_dock_statement
 EXECUTE FUNCTION log_dock_statement_fn();
 
 -- Docs
+COMMENT ON FUNCTION VALIDATE_RECORD_EXISTS_FN(p_table_name TEXT, p_column_name TEXT, p_value INT) IS
+'Checks if a given value exists in a given column of a given table.
+Params:
+    p_table_name: The name of the table to check.
+    p_column_name: The name of the column to check.
+    p_value: The value to check against.
+Raises:
+    Exception: If the table not exist.
+    Exception: If the column does not exist in the table.
+Returns:
+    TRUE if the record exists, FALSE otherwise.
+';
+
+
+COMMENT ON PROCEDURE ADD_DOCK_SP(p_station_id INT, p_dock_number INT, p_is_operational BOOLEAN) IS
+'Checks if a given value exists in a given column of a given table.
+Params:
+    p_station_id: The station of the dock.
+    p_dock_number: The number of the dock.
+    p_is_operational: If the dock is operational or not. True by default.
+Raises:
+    Exception: If the station doesn''t exist
+    Notice: If the dock was successfully added to the station.
+Returns:
+    TRUE if the record exists, FALSE otherwise.';
+
+
 
 COMMENT ON PROCEDURE PURCHASE_MEMBERSHIP_SP(INT, VARCHAR, INT) IS
 'Purchases or extends a membership for a rider, if the rider selects a new membership type it is updated.
@@ -691,6 +746,7 @@ Raises:
     Exception: If the rider does not exist.
     Exception: If the membership type is invalid.
     ';
+
 
 COMMENT ON PROCEDURE CREATE_STATION_SP(VARCHAR, INT, VARCHAR, VARCHAR, NUMERIC, NUMERIC, INT, VARCHAR, VARCHAR, VARCHAR) IS
 'Creates a new station.
@@ -709,18 +765,87 @@ Params:
     Exception: If the program does not exist.
 ';
 
-COMMENT ON FUNCTION VALIDATE_RECORD_EXISTS_FN(p_table_name TEXT, p_column_name TEXT, p_value INT) IS
-'Checks if a given value exists in a given column of a given table.
+
+COMMENT ON PROCEDURE CREATE_BICYCLE_SP(p_bicycle_type VARCHAR(10), p_make VARCHAR(50), p_model VARCHAR(50), p_color VARCHAR(30), p_year_acquired INT, p_bicycle_id INT) IS
+'Creates a new bicycle.
 Params:
-    p_table_name: The name of the table to check.
-    p_column_name: The name of the column to check.
-    p_value: The value to check against.
-Raises:
-    Exception: If the table not exist.
-    Exception: If the column does not exist in the table.
-Returns:
-    TRUE if the record exists, FALSE otherwise.
+    p_bicycle_type: The type of bicycle of the bike.
+    p_make: The maker of the bike.
+    p_model: The model of the bike.
+    p_color: The color of the bike.
+    p_year_acquired: The year the bike was acquired.
+ Raises:
+    Exception: If the bicycle type does not exist, or is not one of the allowed ones.
 ';
+
+
+COMMENT ON PROCEDURE CREATE_ACCOUNT_SP(p_first_name VARCHAR(50), p_last_name VARCHAR(50), p_email VARCHAR(50),
+    p_phone VARCHAR(30), p_street VARCHAR(120), p_apt VARCHAR(20), p_city VARCHAR(60), p_state VARCHAR(60), p_zip VARCHAR(20), p_account_id INT) IS
+'Creates a new rider account.
+Params:
+    p_first_name: The first name of the rider.
+    p_last_name: The last name of the rider.
+    p_email: The email of the rider. Has to be unique.
+    p_phone: The phone number of the rider.
+    p_street: The street of the rider.
+    p_apt: The apartment number of the rider.
+    p_city: The city of the rider.
+    p_state: The state of residency of the rider.
+    p_zip: The zip code of residency of the rider.
+ Raises:
+    Exception: If no p_first_name, p_last_name, or p_email was provided, or if an account already exists with the given email address.
+';
+
+
+COMMENT ON PROCEDURE START_TRIP_SP(p_rider_id INT, p_start_station_id INT, p_start_station_dock_id INT, p_bicycle_id INT) IS
+'Starts a new trip
+Params:
+    p_rider_id: The id of the rider doing the trip.
+    p_start_station_id: The id of the starting station of the trip.
+    p_start_station_dock_id: THe id of the dock at starting starting station.
+    p_bicycle_id: The id of the bicycle to start the trip with.
+ Raises:
+    Exception:
+        - if the given station id refers to a non-existing station
+        - if the given dock id refers to a non-existing dock
+        - if the given bicycle refers to a non-existing, or unavailable bicycle
+        - if the given rider id refers to a non-existing rider
+        - if the given station''s status is accepting renting right now
+        - if the given dock is not operation
+        - if the type of the given bicycle is not available at the start station
+';
+
+COMMENT ON PROCEDURE END_TRIP_SP(p_trip_id INT, p_end_station_id INT) IS
+'Ends a started trip.
+Params:
+    p_trip_id: The id of the trip to end.
+    p_end_station_id: The id of the station at which the trip is ending.
+
+ Raises:
+    Exception:
+        - if the given trip id doesn''t exist, or the trip is already finished
+        - if the given end station doesn''t exist, or doesn''t accept returns
+';
+
+
+COMMENT ON FUNCTION check_dock_capacity_fn() IS
+'Trigger function to check that a station''s capacity for docks is respected
+Params:
+    row that is about to be inserted in table dock
+
+ Raises:
+    Exception:
+        - if the station in which the row was to be inserted doesn''t exist
+        - if adding one more dock would exceed the station''s capacity';
+
+
+COMMENT ON FUNCTION log_dock_statement_fn() IS
+'Trigger function to log actions made on table dock
+Params:
+    row that is about to be inserted in table dock
+
+ Raises:
+    nothing';
 
 
 
@@ -1028,6 +1153,7 @@ GRANT auditor_role TO nina_auditor;
 -- =========================================================
 
 GRANT USAGE ON SCHEMA public TO PUBLIC;
+
 
 -- =========================================================
 -- SECTION 4: SEED DATA
@@ -1564,9 +1690,9 @@ FROM generate_series(1, 1000) g
 -- Dictionary views, metadata queries
 -- =========================================================
 
-SELECT pg_size_pretty(pg_database_size('bcylce')) as db_size;
+SELECT pg_size_pretty(pg_database_size('bcycle')) as db_size;
 SELECT current_setting('block_size') as block_size;
-SELECT ctid, * FROM mv_data_dict_columns;
+
 
 CREATE OR REPLACE VIEW v_relation_sizes AS
     SELECT
@@ -1625,7 +1751,18 @@ CREATE OR REPLACE VIEW v_page_usage_table AS
             WHEN pc.relpages = 0 THEN stat.n_live_tup
             WHEN pc.relpages > 0 THEN
                 stat.n_live_tup % (SELECT count(*) FROM heap_page_items(get_raw_page(stat.relname, 0)))
-        END AS tups_in_allocated_page
+        END AS tups_in_allocated_page,
+        CASE
+            WHEN pc.relpages > 0 THEN
+                ROUND((1 /
+                    (SELECT count(*) FROM heap_page_items(get_raw_page(stat.relname, 0)))::numeric),
+                    5)
+            WHEN pc.relpages = 0 AND stat.n_live_tup > 0 THEN
+                ROUND((1 /
+                    (SELECT (current_setting('block_size')::int - 32) / (AVG(lp_len) + 8)
+                    FROM heap_page_items(get_raw_page(stat.relname, 0)))::numeric),
+                    5)
+            END AS pages_on_tup
     FROM pg_stat_user_tables stat
     LEFT JOIN pg_class pc ON stat.relname = pc.relname
         AND pc.relnamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'public')
@@ -1641,12 +1778,18 @@ CREATE OR REPLACE VIEW v_page_usage_materialized AS
         END AS allocated_pages,
         s.exact_tuples AS tot_tups,
         s.page_capacity AS real_max_tups_in_page,
-        NULL::numeric AS est_max_tups_in_page,
+        s.estimated_page_capacity AS est_max_tups_in_page,
         CASE
             WHEN s.exact_tuples = 0 THEN NULL
             WHEN s.allocated_pages = 0 THEN s.exact_tuples
             WHEN s.page_capacity > 0 THEN s.exact_tuples % s.page_capacity
-        END AS tups_in_allocated_page
+        END AS tups_in_allocated_page,
+        CASE
+            WHEN s.page_capacity > 0 THEN
+                ROUND((1 / s.page_capacity::numeric), 5)
+            WHEN s.page_capacity IS NULL AND s.exact_tuples > 0 THEN
+                ROUND((1 / s.estimated_page_capacity::numeric), 5)
+            END AS pages_on_tup
     FROM pg_class pc
     INNER JOIN pg_namespace ns ON pc.relnamespace = ns.oid
     CROSS JOIN LATERAL (
@@ -1657,7 +1800,14 @@ CREATE OR REPLACE VIEW v_page_usage_materialized AS
             CASE
                 WHEN pg_relation_size(format('%I.%I', ns.nspname, pc.relname), 'main') > 0 THEN
                     (SELECT count(*) FROM heap_page_items(get_raw_page(format('%I.%I', ns.nspname, pc.relname), 0)))
-            END AS page_capacity
+            END AS page_capacity,
+            CASE
+                WHEN pg_relation_size(format('%I.%I', ns.nspname, pc.relname), 'main') > 0 THEN
+                    NULL
+                ELSE
+                    FLOOR((current_setting('block_size')::int - 32) /
+                           (SELECT AVG(lp_len)::int FROM heap_page_items(get_raw_page(format('%I.%I', ns.nspname, pc.relname), 0))) + 8)::int
+                END AS estimated_page_capacity
     ) AS s
     WHERE ns.nspname = 'public' AND pc.relkind = 'm'
     ORDER BY pc.relname;
@@ -1856,6 +2006,8 @@ GROUP BY cols.table_schema, cols.table_name, cols.column_name, cols.data_type,
          cols.is_nullable, cols.column_default
 ORDER BY cols.table_name, cols.column_name
 WITH DATA;
+
+-- SELECT ctid, * FROM mv_data_dict_columns;
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_mv_data_dict_cols_unique
     ON mv_data_dict_columns(tab_schema, tab_name, col_name);
