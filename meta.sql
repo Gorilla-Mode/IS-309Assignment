@@ -1,4 +1,4 @@
-SELECT pg_size_pretty(pg_database_size('bcylce')) as db_size;
+SELECT pg_size_pretty(pg_database_size('bcycle')) as db_size;
 SELECT current_setting('block_size') as block_size;
 SELECT ctid, * FROM mv_data_dict_columns;
 
