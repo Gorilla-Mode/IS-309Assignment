@@ -1,6 +1,6 @@
 SELECT pg_size_pretty(pg_database_size('bcycle')) as db_size;
 SELECT current_setting('block_size') as block_size;
-SELECT ctid, * FROM mv_data_dict_columns;
+
 
 CREATE OR REPLACE VIEW v_relation_sizes AS
     SELECT
@@ -314,6 +314,8 @@ GROUP BY cols.table_schema, cols.table_name, cols.column_name, cols.data_type,
          cols.is_nullable, cols.column_default
 ORDER BY cols.table_name, cols.column_name
 WITH DATA;
+
+-- SELECT ctid, * FROM mv_data_dict_columns;
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_mv_data_dict_cols_unique
     ON mv_data_dict_columns(tab_schema, tab_name, col_name);
