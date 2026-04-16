@@ -59,7 +59,18 @@ CREATE OR REPLACE VIEW v_page_usage_table AS
             WHEN pc.relpages = 0 THEN stat.n_live_tup
             WHEN pc.relpages > 0 THEN
                 stat.n_live_tup % (SELECT count(*) FROM heap_page_items(get_raw_page(stat.relname, 0)))
-        END AS tups_in_allocated_page
+        END AS tups_in_allocated_page,
+        CASE
+            WHEN pc.relpages > 0 THEN
+                ROUND((1 /
+                    (SELECT count(*) FROM heap_page_items(get_raw_page(stat.relname, 0)))::numeric),
+                    5)
+            WHEN pc.relpages = 0 AND stat.n_live_tup > 0 THEN
+                ROUND((1 /
+                    (SELECT (current_setting('block_size')::int - 32) / (AVG(lp_len) + 8)
+                    FROM heap_page_items(get_raw_page(stat.relname, 0)))::numeric),
+                    5)
+            END AS pages_on_tup
     FROM pg_stat_user_tables stat
     LEFT JOIN pg_class pc ON stat.relname = pc.relname
         AND pc.relnamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'public')
@@ -75,12 +86,18 @@ CREATE OR REPLACE VIEW v_page_usage_materialized AS
         END AS allocated_pages,
         s.exact_tuples AS tot_tups,
         s.page_capacity AS real_max_tups_in_page,
-        NULL::numeric AS est_max_tups_in_page,
+        s.estimated_page_capacity AS est_max_tups_in_page,
         CASE
             WHEN s.exact_tuples = 0 THEN NULL
             WHEN s.allocated_pages = 0 THEN s.exact_tuples
             WHEN s.page_capacity > 0 THEN s.exact_tuples % s.page_capacity
-        END AS tups_in_allocated_page
+        END AS tups_in_allocated_page,
+        CASE
+            WHEN s.page_capacity > 0 THEN
+                ROUND((1 / s.page_capacity::numeric), 5)
+            WHEN s.page_capacity IS NULL AND s.exact_tuples > 0 THEN
+                ROUND((1 / s.estimated_page_capacity::numeric), 5)
+            END AS pages_on_tup
     FROM pg_class pc
     INNER JOIN pg_namespace ns ON pc.relnamespace = ns.oid
     CROSS JOIN LATERAL (
@@ -91,7 +108,14 @@ CREATE OR REPLACE VIEW v_page_usage_materialized AS
             CASE
                 WHEN pg_relation_size(format('%I.%I', ns.nspname, pc.relname), 'main') > 0 THEN
                     (SELECT count(*) FROM heap_page_items(get_raw_page(format('%I.%I', ns.nspname, pc.relname), 0)))
-            END AS page_capacity
+            END AS page_capacity,
+            CASE
+                WHEN pg_relation_size(format('%I.%I', ns.nspname, pc.relname), 'main') > 0 THEN
+                    NULL
+                ELSE
+                    FLOOR((current_setting('block_size')::int - 32) /
+                           (SELECT AVG(lp_len)::int FROM heap_page_items(get_raw_page(format('%I.%I', ns.nspname, pc.relname), 0))) + 8)::int
+                END AS estimated_page_capacity
     ) AS s
     WHERE ns.nspname = 'public' AND pc.relkind = 'm'
     ORDER BY pc.relname;
