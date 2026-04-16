@@ -210,8 +210,6 @@ BEGIN
         (p_first_name, p_last_name, p_email, p_phone, p_street, p_apt,
          p_city, p_state, p_zip)
     RETURNING riderid INTO p_account_id;
-
-    RAISE NOTICE 'Created the account, riderId is : %', p_account_id;
 END;
 $$;
 
