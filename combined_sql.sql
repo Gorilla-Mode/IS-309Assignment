@@ -2094,3 +2094,108 @@ ALTER ROLE nina_auditor          PASSWORD '<strong-password>';
 -- =========================================================
 
 --endregion
+DO $$
+    DECLARE
+    v_account_id INT;
+    BEGIN
+    CALL CREATE_ACCOUNT_SP(
+     'Rollo', 'Tomasi', 'rollotomasi@proton.me', '+47092301334',
+     '7600 S Broadway', '1', 'Los Angels', '90003','CA', v_account_id
+     );
+    RAISE NOTICE 'New account ID: %', v_account_id;
+    END;
+$$;
+
+CALL PURCHASE_MEMBERSHIP_SP(
+     p_rider_id := 3,
+     p_membership_type := 'ANNUAL',
+     p_membership_id := null
+     );
+
+CALL PURCHASE_MEMBERSHIP_SP(
+     p_rider_id := 5,
+     p_membership_type := 'DAY',
+     p_membership_id := null
+     );
+
+CALL PURCHASE_MEMBERSHIP_SP(
+     p_rider_id := 43,
+     p_membership_type := 'DAY',
+     p_membership_id := null
+     );
+
+CALL PURCHASE_MEMBERSHIP_SP(
+     p_rider_id := 43,
+     p_membership_type := 'WEEKLY',
+     p_membership_id := null
+     );
+
+CALL CREATE_STATION_SP(
+       p_station_code := 'KRS-677',
+       p_program_id := 1,
+       p_address := 'UiA 54',
+       p_name := 'Universitetet',
+       p_latitude := 40.712776,
+       p_longitude := -74.005974,
+       p_capacity := 20,
+       p_postalcode := '4603',
+       p_contactphone := '+47 12345678',
+       p_shortname := 'UiA'
+);
+
+CALL CREATE_STATION_SP(
+       p_station_code := 'KRS-678',
+       p_program_id := 5000,
+       p_address := 'UiA 54',
+       p_name := 'Universitetet',
+       p_latitude := 40.712776,
+       p_longitude := -74.005974,
+       p_capacity := 20,
+       p_postalcode := '4603',
+       p_contactphone := '+47 12345678',
+       p_shortname := 'UiA'
+);
+
+CALL CREATE_BICYCLE_SP(
+     'ELECTRIC',
+     'Specialized',
+     'Turbo Vado 4.0',
+     'Matte Black',
+     2026,
+     NULL
+     );
+
+SELECT *
+FROM Bicycle
+ORDER BY bicycleid DESC;
+
+CALL CREATE_BICYCLE_SP(
+     'BMX',
+     'Test',
+     'InvalidType',
+     'Red',
+     2026,
+     NULL
+     );
+
+SELECT *
+FROM public.dock
+WHERE stationid = 1
+ORDER BY docknumber;
+
+
+CALL ADD_DOCK_SP(1, 6, TRUE);
+SELECT *
+FROM public.dock
+WHERE stationid = 1
+ORDER BY docknumber;
+
+CALL START_TRIP_SP(1,3,1,2);
+CALL START_TRIP_SP(1,3,1,2);
+CALL START_TRIP_SP(1,3,5,3);
+CALL START_TRIP_SP(1,1,1,3);
+
+CALL END_TRIP_SP(6,6); -- Diff endstation from appedix to use a valid trip from seeding
+CALL END_TRIP_SP(6,6);
+CALL END_TRIP_SP(1222,6);
+
