@@ -1,3 +1,4 @@
+--region DDL: Tables
 -- =========================================================
 -- FULL DATABASE SETUP SCRIPT
 -- Project: Bicycle Sharing Database
@@ -128,7 +129,8 @@ CREATE TABLE IF NOT EXISTS BicycleStatus (
                                BatteryPercent   SMALLINT CHECK (BatteryPercent IS NULL OR (BatteryPercent >= 0 AND BatteryPercent <= 100)),
                                RemainingRange   NUMERIC(6,2) CHECK (RemainingRange IS NULL OR RemainingRange >= 0)
 );
-
+--endregion
+--region DDL: Functions and procedures
 -- =========================================================
 -- SECTION 2: STORED PROCEDURES AND FUNCTIONS
 -- Includes triggers and procedural logic
@@ -846,9 +848,8 @@ Params:
 
  Raises:
     nothing';
-
-
-
+--endregion
+--region DCL
 -- =========================================================
 -- SECTION 3: ROLES AND PRIVILEGES
 -- User roles and access permissions
@@ -1153,8 +1154,8 @@ GRANT auditor_role TO nina_auditor;
 -- =========================================================
 
 GRANT USAGE ON SCHEMA public TO PUBLIC;
-
-
+--endregion
+--region DML: Seed Data
 -- =========================================================
 -- SECTION 4: SEED DATA
 -- Initial test data
@@ -1683,8 +1684,8 @@ FROM generate_series(1, 1000) g
     SELECT stationid FROM station ORDER BY random() LIMIT 1
     ) s2;
  */
-
-
+--endregion
+--region Meta data
 -- =========================================================
 -- SECTION 5: METADATA AND VIEWS
 -- Dictionary views, metadata queries
@@ -2063,8 +2064,8 @@ END;
 $$;
 
 CALL refresh_materialized_views();
-
-
+--endregion
+--region Password setup
 -- =========================================================
 -- OPTIONAL SECTION: PASSWORD SETUP (EXAMPLE ONLY)
 -- =========================================================
@@ -2086,3 +2087,10 @@ ALTER ROLE ola_maintenance       PASSWORD '<strong-password>';
 ALTER ROLE emma_support          PASSWORD '<strong-password>';
 ALTER ROLE lars_station_manager  PASSWORD '<strong-password>';
 ALTER ROLE nina_auditor          PASSWORD '<strong-password>';
+--endregion
+--region misc
+-- =========================================================
+-- MISCELLANEOUS SECTION: SHOWCASE QUERIES
+-- =========================================================
+
+--endregion
