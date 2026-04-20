@@ -2,4 +2,3 @@
 *.sql linguist-language=sql
 sp.sql linguist-language=PLpgSQL linguist-detectable=true
 meta.sql linguist-language=sql linguist-detectable=true
-combined_sql.sql linguist-language=sql linguist-detectable=true
