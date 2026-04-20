@@ -2240,5 +2240,16 @@ ORDER BY action_time DESC;
 
 -- In text commands
 
-    
+DROP INDEX public.idx_trip_riderid; --Drop exisitng index, added as a result of these tests
+EXPLAIN ANALYSE
+SELECT * FROM trip WHERE riderid = 123;
+
+CREATE INDEX idx_trip_riderid
+    ON trip (riderid);
+SET enable_seqscan = OFF; --Force index scan, result in text was achieved with larger dataset
+EXPLAIN ANALYSE
+SELECT * FROM trip WHERE riderid = 123;
+SET enable_seqscan = ON;
+
+
 --endregion
