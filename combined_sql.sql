@@ -2092,8 +2092,9 @@ ALTER ROLE nina_auditor          PASSWORD '<strong-password>';
 -- =========================================================
 -- MISCELLANEOUS SECTION: SHOWCASE QUERIES
 -- =========================================================
+-- Section contains commands with deliberate errors.
 
---endregion
+-- Appendix C
 DO $$
     DECLARE
     v_account_id INT;
@@ -2183,7 +2184,6 @@ FROM public.dock
 WHERE stationid = 1
 ORDER BY docknumber;
 
-
 CALL ADD_DOCK_SP(1, 6, TRUE);
 SELECT *
 FROM public.dock
@@ -2199,3 +2199,46 @@ CALL END_TRIP_SP(6,6); -- Diff endstation from appedix to use a valid trip from 
 CALL END_TRIP_SP(6,6);
 CALL END_TRIP_SP(1222,6);
 
+--Appendix D
+SELECT VALIDATE_RECORD_EXISTS_FN('station', 'stationid', 1) AS Result;
+SELECT VALIDATE_RECORD_EXISTS_FN('station', 'stationid', 6543) AS Result;
+SELECT VALIDATE_RECORD_EXISTS_FN('staon', 'stationid', 1) AS Result;
+SELECT VALIDATE_RECORD_EXISTS_FN('station', 'stsasaationid', 6543) AS Result;
+
+--Some diff to use existing data
+DELETE FROM public.dock
+WHERE stationid = 14;
+UPDATE station
+SET capacity = 1
+WHERE stationid = 14;
+INSERT INTO public.dock (stationid, docknumber, isoperational)
+VALUES (14, 1, TRUE);
+INSERT INTO public.dock (stationid, docknumber, isoperational)
+VALUES (14, 2, TRUE);
+
+UPDATE station
+SET capacity = 135
+WHERE stationid = 14; --Reset to default capacity
+DELETE FROM public.dock
+WHERE stationid = 14;
+INSERT INTO public.dock (stationid, docknumber, isoperational)
+VALUES (14, 1, TRUE);
+INSERT INTO public.dock (stationid, docknumber, isoperational)
+VALUES (14, 2, TRUE);
+
+SELECT *
+FROM public.dock
+WHERE stationid = 14
+ORDER BY docknumber;
+
+INSERT INTO public.dock(stationid, docknumber, isoperational)
+VALUES (2, 99, TRUE);
+
+SELECT *
+FROM dock_audit_log
+ORDER BY action_time DESC;
+
+-- In text commands
+
+    
+--endregion
