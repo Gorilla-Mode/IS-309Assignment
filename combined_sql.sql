@@ -1,3 +1,4 @@
+--region DDL: Tables
 -- =========================================================
 -- FULL DATABASE SETUP SCRIPT
 -- Project: Bicycle Sharing Database
@@ -128,7 +129,8 @@ CREATE TABLE IF NOT EXISTS BicycleStatus (
                                BatteryPercent   SMALLINT CHECK (BatteryPercent IS NULL OR (BatteryPercent >= 0 AND BatteryPercent <= 100)),
                                RemainingRange   NUMERIC(6,2) CHECK (RemainingRange IS NULL OR RemainingRange >= 0)
 );
-
+--endregion
+--region DDL: Functions and procedures
 -- =========================================================
 -- SECTION 2: STORED PROCEDURES AND FUNCTIONS
 -- Includes triggers and procedural logic
@@ -846,9 +848,8 @@ Params:
 
  Raises:
     nothing';
-
-
-
+--endregion
+--region DCL
 -- =========================================================
 -- SECTION 3: ROLES AND PRIVILEGES
 -- User roles and access permissions
@@ -1153,8 +1154,8 @@ GRANT auditor_role TO nina_auditor;
 -- =========================================================
 
 GRANT USAGE ON SCHEMA public TO PUBLIC;
-
-
+--endregion
+--region DML: Seed Data
 -- =========================================================
 -- SECTION 4: SEED DATA
 -- Initial test data
@@ -1683,8 +1684,8 @@ FROM generate_series(1, 1000) g
     SELECT stationid FROM station ORDER BY random() LIMIT 1
     ) s2;
  */
-
-
+--endregion
+--region Meta data
 -- =========================================================
 -- SECTION 5: METADATA AND VIEWS
 -- Dictionary views, metadata queries
@@ -2063,8 +2064,8 @@ END;
 $$;
 
 CALL refresh_materialized_views();
-
-
+--endregion
+--region Password setup
 -- =========================================================
 -- OPTIONAL SECTION: PASSWORD SETUP (EXAMPLE ONLY)
 -- =========================================================
@@ -2086,3 +2087,199 @@ ALTER ROLE ola_maintenance       PASSWORD '<strong-password>';
 ALTER ROLE emma_support          PASSWORD '<strong-password>';
 ALTER ROLE lars_station_manager  PASSWORD '<strong-password>';
 ALTER ROLE nina_auditor          PASSWORD '<strong-password>';
+--endregion
+
+-- =========================================================
+-- MISCELLANEOUS SECTION: SHOWCASE QUERIES
+-- =========================================================
+-- Section contains commands with deliberate errors.
+
+--region In text commands
+DROP INDEX public.idx_trip_riderid; --Drop exisitng index, added as a result of these tests
+EXPLAIN ANALYSE
+SELECT * FROM trip WHERE riderid = 123;
+
+CREATE INDEX idx_trip_riderid
+    ON trip (riderid);
+SET enable_seqscan = OFF; --Force index scan, result in text was achieved with larger dataset
+EXPLAIN ANALYSE
+SELECT * FROM trip WHERE riderid = 123;
+SET enable_seqscan = ON;
+
+DO $$
+    BEGIN
+        IF EXISTS (
+            SELECT 1
+            FROM pg_class c
+                     JOIN pg_namespace n ON n.oid = c.relnamespace
+            WHERE c.relname = 'dock_audit_log'
+              AND n.nspname = 'public'
+        ) THEN
+            GRANT SELECT ON public.dock_audit_log TO auditor_role;
+        END IF;
+    END
+$$;
+
+GRANT USAGE ON SCHEMA public TO insight_role;
+GRANT USAGE ON SCHEMA public TO bcycle_administrative_role;
+GRANT USAGE ON SCHEMA public TO account_administrator_role;
+--endregion
+
+--region Appendix C
+DO $$
+    DECLARE
+    v_account_id INT;
+    BEGIN
+    CALL CREATE_ACCOUNT_SP(
+     'Rollo', 'Tomasi', 'rollotomasi@proton.me', '+47092301334',
+     '7600 S Broadway', '1', 'Los Angels', '90003','CA', v_account_id
+     );
+    RAISE NOTICE 'New account ID: %', v_account_id;
+    END;
+$$;
+
+CALL PURCHASE_MEMBERSHIP_SP(
+     p_rider_id := 3,
+     p_membership_type := 'ANNUAL',
+     p_membership_id := null
+     );
+
+CALL PURCHASE_MEMBERSHIP_SP(
+     p_rider_id := 5,
+     p_membership_type := 'DAY',
+     p_membership_id := null
+     );
+
+CALL PURCHASE_MEMBERSHIP_SP(
+     p_rider_id := 43,
+     p_membership_type := 'DAY',
+     p_membership_id := null
+     );
+
+CALL PURCHASE_MEMBERSHIP_SP(
+     p_rider_id := 43,
+     p_membership_type := 'WEEKLY',
+     p_membership_id := null
+     );
+
+CALL CREATE_STATION_SP(
+       p_station_code := 'KRS-677',
+       p_program_id := 1,
+       p_address := 'UiA 54',
+       p_name := 'Universitetet',
+       p_latitude := 40.712776,
+       p_longitude := -74.005974,
+       p_capacity := 20,
+       p_postalcode := '4603',
+       p_contactphone := '+47 12345678',
+       p_shortname := 'UiA'
+);
+
+CALL CREATE_STATION_SP(
+       p_station_code := 'KRS-678',
+       p_program_id := 5000,
+       p_address := 'UiA 54',
+       p_name := 'Universitetet',
+       p_latitude := 40.712776,
+       p_longitude := -74.005974,
+       p_capacity := 20,
+       p_postalcode := '4603',
+       p_contactphone := '+47 12345678',
+       p_shortname := 'UiA'
+);
+
+CALL CREATE_BICYCLE_SP(
+     'ELECTRIC',
+     'Specialized',
+     'Turbo Vado 4.0',
+     'Matte Black',
+     2026,
+     NULL
+     );
+
+SELECT *
+FROM Bicycle
+ORDER BY bicycleid DESC;
+
+CALL CREATE_BICYCLE_SP(
+     'BMX',
+     'Test',
+     'InvalidType',
+     'Red',
+     2026,
+     NULL
+     );
+
+SELECT *
+FROM public.dock
+WHERE stationid = 1
+ORDER BY docknumber;
+
+CALL ADD_DOCK_SP(1, 6, TRUE);
+SELECT *
+FROM public.dock
+WHERE stationid = 1
+ORDER BY docknumber;
+
+CALL START_TRIP_SP(1,3,1,2);
+CALL START_TRIP_SP(1,3,1,2);
+CALL START_TRIP_SP(1,3,5,3);
+CALL START_TRIP_SP(1,1,1,3);
+
+CALL END_TRIP_SP(6,6); -- Diff endstation from appedix to use a valid trip from seeding
+CALL END_TRIP_SP(6,6);
+CALL END_TRIP_SP(1222,6);
+--endregion
+--region Appendix D
+SELECT VALIDATE_RECORD_EXISTS_FN('station', 'stationid', 1) AS Result;
+SELECT VALIDATE_RECORD_EXISTS_FN('station', 'stationid', 6543) AS Result;
+SELECT VALIDATE_RECORD_EXISTS_FN('staon', 'stationid', 1) AS Result;
+SELECT VALIDATE_RECORD_EXISTS_FN('station', 'stsasaationid', 6543) AS Result;
+
+--Some diff to use existing data
+DELETE FROM public.dock
+WHERE stationid = 14;
+UPDATE station
+SET capacity = 1
+WHERE stationid = 14;
+INSERT INTO public.dock (stationid, docknumber, isoperational)
+VALUES (14, 1, TRUE);
+INSERT INTO public.dock (stationid, docknumber, isoperational)
+VALUES (14, 2, TRUE);
+
+UPDATE station
+SET capacity = 135
+WHERE stationid = 14; --Reset to default capacity
+DELETE FROM public.dock
+WHERE stationid = 14;
+INSERT INTO public.dock (stationid, docknumber, isoperational)
+VALUES (14, 1, TRUE);
+INSERT INTO public.dock (stationid, docknumber, isoperational)
+VALUES (14, 2, TRUE);
+
+SELECT *
+FROM public.dock
+WHERE stationid = 14
+ORDER BY docknumber;
+
+INSERT INTO public.dock(stationid, docknumber, isoperational)
+VALUES (2, 99, TRUE);
+
+SELECT *
+FROM dock_audit_log
+ORDER BY action_time DESC;
+--endregion
+--region Appendix E
+
+    --See region DCL
+
+--endregion
+--region Appendix F
+
+    SELECT current_setting('block_size') as block_size;
+
+    CREATE EXTENSION IF NOT EXISTS pageinspect;
+
+    --Other DDL from appendix F is in the metadata section.
+
+--endregion

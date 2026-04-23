@@ -42,6 +42,7 @@ $sqlAbsolutePath = $scriptAbsolutePath+"/db.sql"
 $SqlDataAbsolutePath = $scriptAbsolutePath+"/seeddata.sql"
 $SqlProcedureAbsolutePath = $scriptAbsolutePath+"/sp.sql"
 $SqlMetaAbsolutePath = $scriptAbsolutePath+"/meta.sql"
+$SqlRolesPath = $scriptAbsolutePath+"/roles_and_privileges.sql"
 $envAbsolutePath = $scriptAbsolutePath+"/.env"
 
 #tests
@@ -78,6 +79,9 @@ if(!$ni)
 
         Write-Host "Injecting meta.sql from @ $SqlProcedureAbsolutePath to container..."
         docker cp $SqlMetaAbsolutePath is309_db:/meta.sql
+
+        Write-Host "Injecting roles_and_privileges.sql from @ $SqlRolesPath to container..."
+        docker cp $SqlRolesPath is309_db:/roles_and_privileges.sql
     }
     catch
     {
@@ -146,6 +150,10 @@ if(!$ne)
         Write-Host "Executing stored procedures sql script on $($envHash['POSTGRES_DB'])..."
         docker exec -i is309_db sh -c "PGPASSWORD='$($envHash['POSTGRES_PASSWORD'])' psql -U $($envHash['POSTGRES_USER']) -d $($envHash['POSTGRES_DB']) -f /sp.sql"
         Write-Host "    Sql script executed, procedures created"
+
+        Write-Host "Executing roles sql script on $($envHash['POSTGRES_DB'])..."
+        docker exec -i is309_db sh -c "PGPASSWORD='$($envHash['POSTGRES_PASSWORD'])' psql -U $($envHash['POSTGRES_USER']) -d $($envHash['POSTGRES_DB']) -f /roles_and_privileges.sql"
+        Write-Host "    Sql script executed, roles and privileges created"
 
         Write-Host "Executing meta data sql script on $($envHash['POSTGRES_DB'])..."
         docker exec -i is309_db sh -c "PGPASSWORD='$($envHash['POSTGRES_PASSWORD'])' psql -U $($envHash['POSTGRES_USER']) -d $($envHash['POSTGRES_DB']) -f /meta.sql"
