@@ -2088,13 +2088,44 @@ ALTER ROLE emma_support          PASSWORD '<strong-password>';
 ALTER ROLE lars_station_manager  PASSWORD '<strong-password>';
 ALTER ROLE nina_auditor          PASSWORD '<strong-password>';
 --endregion
---region misc
+
 -- =========================================================
 -- MISCELLANEOUS SECTION: SHOWCASE QUERIES
 -- =========================================================
 -- Section contains commands with deliberate errors.
 
--- Appendix C
+--region In text commands
+DROP INDEX public.idx_trip_riderid; --Drop exisitng index, added as a result of these tests
+EXPLAIN ANALYSE
+SELECT * FROM trip WHERE riderid = 123;
+
+CREATE INDEX idx_trip_riderid
+    ON trip (riderid);
+SET enable_seqscan = OFF; --Force index scan, result in text was achieved with larger dataset
+EXPLAIN ANALYSE
+SELECT * FROM trip WHERE riderid = 123;
+SET enable_seqscan = ON;
+
+DO $$
+    BEGIN
+        IF EXISTS (
+            SELECT 1
+            FROM pg_class c
+                     JOIN pg_namespace n ON n.oid = c.relnamespace
+            WHERE c.relname = 'dock_audit_log'
+              AND n.nspname = 'public'
+        ) THEN
+            GRANT SELECT ON public.dock_audit_log TO auditor_role;
+        END IF;
+    END
+$$;
+
+GRANT USAGE ON SCHEMA public TO insight_role;
+GRANT USAGE ON SCHEMA public TO bcycle_administrative_role;
+GRANT USAGE ON SCHEMA public TO account_administrator_role;
+--endregion
+
+--region Appendix C
 DO $$
     DECLARE
     v_account_id INT;
@@ -2198,8 +2229,8 @@ CALL START_TRIP_SP(1,1,1,3);
 CALL END_TRIP_SP(6,6); -- Diff endstation from appedix to use a valid trip from seeding
 CALL END_TRIP_SP(6,6);
 CALL END_TRIP_SP(1222,6);
-
---Appendix D
+--endregion
+--region Appendix D
 SELECT VALIDATE_RECORD_EXISTS_FN('station', 'stationid', 1) AS Result;
 SELECT VALIDATE_RECORD_EXISTS_FN('station', 'stationid', 6543) AS Result;
 SELECT VALIDATE_RECORD_EXISTS_FN('staon', 'stationid', 1) AS Result;
@@ -2237,19 +2268,18 @@ VALUES (2, 99, TRUE);
 SELECT *
 FROM dock_audit_log
 ORDER BY action_time DESC;
+--endregion
+--region Appendix E
 
--- In text commands
+    --See region DCL
 
-DROP INDEX public.idx_trip_riderid; --Drop exisitng index, added as a result of these tests
-EXPLAIN ANALYSE
-SELECT * FROM trip WHERE riderid = 123;
+--endregion
+--region Appendix F
 
-CREATE INDEX idx_trip_riderid
-    ON trip (riderid);
-SET enable_seqscan = OFF; --Force index scan, result in text was achieved with larger dataset
-EXPLAIN ANALYSE
-SELECT * FROM trip WHERE riderid = 123;
-SET enable_seqscan = ON;
+    SELECT current_setting('block_size') as block_size;
 
+    CREATE EXTENSION IF NOT EXISTS pageinspect;
+
+    --Other DDL from appendix F is in the metadata section.
 
 --endregion
